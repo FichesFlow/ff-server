@@ -35,7 +35,7 @@ class Report
     private ?string $reason = null;
 
     #[ORM\Column(enumType: ReportStatus::class)]
-    private ?ReportStatus $status = null;
+    private ?ReportStatus $status = ReportStatus::OPEN;
 
     #[ORM\ManyToOne(inversedBy: 'reports_resolved')]
     private ?User $resolver = null;
