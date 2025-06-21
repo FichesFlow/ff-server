@@ -48,9 +48,23 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: UserBadge::class, mappedBy: 'owner', orphanRemoval: true)]
     private Collection $userBadges;
 
+    /**
+     * @var Collection<int, Report>
+     */
+    #[ORM\OneToMany(targetEntity: Report::class, mappedBy: 'reporter')]
+    private Collection $reports;
+
+    /**
+     * @var Collection<int, Report>
+     */
+    #[ORM\OneToMany(targetEntity: Report::class, mappedBy: 'resolver')]
+    private Collection $reports_resolved;
+
     public function __construct()
     {
         $this->userBadges = new ArrayCollection();
+        $this->reports = new ArrayCollection();
+        $this->reports_resolved = new ArrayCollection();
     }
 
     public function getEmail(): ?string
@@ -169,6 +183,66 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             // set the owning side to null (unless already changed)
             if ($userBadge->getOwner() === $this) {
                 $userBadge->setOwner(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Report>
+     */
+    public function getReports(): Collection
+    {
+        return $this->reports;
+    }
+
+    public function addReport(Report $report): static
+    {
+        if (!$this->reports->contains($report)) {
+            $this->reports->add($report);
+            $report->setReporter($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReport(Report $report): static
+    {
+        if ($this->reports->removeElement($report)) {
+            // set the owning side to null (unless already changed)
+            if ($report->getReporter() === $this) {
+                $report->setReporter(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Report>
+     */
+    public function getReportsResolved(): Collection
+    {
+        return $this->reports_resolved;
+    }
+
+    public function addReportsResolved(Report $reportsResolved): static
+    {
+        if (!$this->reports_resolved->contains($reportsResolved)) {
+            $this->reports_resolved->add($reportsResolved);
+            $reportsResolved->setResolver($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReportsResolved(Report $reportsResolved): static
+    {
+        if ($this->reports_resolved->removeElement($reportsResolved)) {
+            // set the owning side to null (unless already changed)
+            if ($reportsResolved->getResolver() === $this) {
+                $reportsResolved->setResolver(null);
             }
         }
 
