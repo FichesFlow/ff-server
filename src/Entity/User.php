@@ -6,6 +6,8 @@ use ApiPlatform\Metadata\ApiResource;
 use App\Entity\Traits\DateAtTrait;
 use App\Entity\Traits\UuidTrait;
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -39,6 +41,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $avatar_url = null;
+
+    /**
+     * @var Collection<int, UserBadge>
+     */
+    #[ORM\OneToMany(targetEntity: UserBadge::class, mappedBy: 'owner', orphanRemoval: true)]
+    private Collection $userBadges;
+
+    public function __construct()
+    {
+        $this->userBadges = new ArrayCollection();
+    }
 
     public function getEmail(): ?string
     {
@@ -128,6 +141,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setAvatarUrl(?string $avatar_url): static
     {
         $this->avatar_url = $avatar_url;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, UserBadge>
+     */
+    public function getUserBadges(): Collection
+    {
+        return $this->userBadges;
+    }
+
+    public function addUserBadge(UserBadge $userBadge): static
+    {
+        if (!$this->userBadges->contains($userBadge)) {
+            $this->userBadges->add($userBadge);
+            $userBadge->setOwner($this);
+        }
+
+        return $this;
+    }
+
+    public function removeUserBadge(UserBadge $userBadge): static
+    {
+        if ($this->userBadges->removeElement($userBadge)) {
+            // set the owning side to null (unless already changed)
+            if ($userBadge->getOwner() === $this) {
+                $userBadge->setOwner(null);
+            }
+        }
 
         return $this;
     }
