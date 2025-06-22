@@ -74,9 +74,6 @@ final class Version20250622080225 extends AbstractMigration
     {
         // this down() migration is auto-generated, please modify it to your needs
         $this->addSql(<<<'SQL'
-            CREATE SCHEMA public
-        SQL);
-        $this->addSql(<<<'SQL'
             ALTER TABLE card DROP CONSTRAINT FK_161498D3111948DC
         SQL);
         $this->addSql(<<<'SQL'

@@ -44,9 +44,6 @@ final class Version20250621194902 extends AbstractMigration
     {
         // this down() migration is auto-generated, please modify it to your needs
         $this->addSql(<<<'SQL'
-            CREATE SCHEMA public
-        SQL);
-        $this->addSql(<<<'SQL'
             ALTER TABLE deck DROP CONSTRAINT FK_4FAC36377E3C61F9
         SQL);
         $this->addSql(<<<'SQL'

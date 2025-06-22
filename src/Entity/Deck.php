@@ -60,10 +60,24 @@ class Deck
     #[ORM\OneToMany(targetEntity: Card::class, mappedBy: 'deck', orphanRemoval: true)]
     private Collection $cards;
 
+    /**
+     * @var Collection<int, DeckRating>
+     */
+    #[ORM\OneToMany(targetEntity: DeckRating::class, mappedBy: 'deck', orphanRemoval: true)]
+    private Collection $deckRatings;
+
+    /**
+     * @var Collection<int, DeckComment>
+     */
+    #[ORM\OneToMany(targetEntity: DeckComment::class, mappedBy: 'deck', orphanRemoval: true)]
+    private Collection $deckComments;
+
     public function __construct()
     {
         $this->tags = new ArrayCollection();
         $this->cards = new ArrayCollection();
+        $this->deckRatings = new ArrayCollection();
+        $this->deckComments = new ArrayCollection();
     }
 
     public function getOwner(): ?User
@@ -222,6 +236,66 @@ class Deck
             // set the owning side to null (unless already changed)
             if ($card->getDeck() === $this) {
                 $card->setDeck(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, DeckRating>
+     */
+    public function getDeckRatings(): Collection
+    {
+        return $this->deckRatings;
+    }
+
+    public function addDeckRating(DeckRating $deckRating): static
+    {
+        if (!$this->deckRatings->contains($deckRating)) {
+            $this->deckRatings->add($deckRating);
+            $deckRating->setDeck($this);
+        }
+
+        return $this;
+    }
+
+    public function removeDeckRating(DeckRating $deckRating): static
+    {
+        if ($this->deckRatings->removeElement($deckRating)) {
+            // set the owning side to null (unless already changed)
+            if ($deckRating->getDeck() === $this) {
+                $deckRating->setDeck(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, DeckComment>
+     */
+    public function getDeckComments(): Collection
+    {
+        return $this->deckComments;
+    }
+
+    public function addDeckComment(DeckComment $deckComment): static
+    {
+        if (!$this->deckComments->contains($deckComment)) {
+            $this->deckComments->add($deckComment);
+            $deckComment->setDeck($this);
+        }
+
+        return $this;
+    }
+
+    public function removeDeckComment(DeckComment $deckComment): static
+    {
+        if ($this->deckComments->removeElement($deckComment)) {
+            // set the owning side to null (unless already changed)
+            if ($deckComment->getDeck() === $this) {
+                $deckComment->setDeck(null);
             }
         }
 
