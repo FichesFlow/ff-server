@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use App\Entity\Traits\DateAtTrait;
 use App\Entity\Traits\UuidTrait;
 use App\Repository\DeckCommentRepository;
 use Doctrine\DBAL\Types\Types;
@@ -13,6 +14,7 @@ use Doctrine\ORM\Mapping as ORM;
 class DeckComment
 {
     use UuidTrait;
+    use DateAtTrait;
 
     #[ORM\ManyToOne(inversedBy: 'deckComments')]
     #[ORM\JoinColumn(nullable: false)]
