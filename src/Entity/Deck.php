@@ -54,9 +54,16 @@ class Deck
     #[ORM\ManyToMany(targetEntity: Tag::class, inversedBy: 'decks')]
     private Collection $tags;
 
+    /**
+     * @var Collection<int, Card>
+     */
+    #[ORM\OneToMany(targetEntity: Card::class, mappedBy: 'deck', orphanRemoval: true)]
+    private Collection $cards;
+
     public function __construct()
     {
         $this->tags = new ArrayCollection();
+        $this->cards = new ArrayCollection();
     }
 
     public function getOwner(): ?User
@@ -187,6 +194,36 @@ class Deck
     public function removeTag(Tag $tag): static
     {
         $this->tags->removeElement($tag);
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Card>
+     */
+    public function getCards(): Collection
+    {
+        return $this->cards;
+    }
+
+    public function addCard(Card $card): static
+    {
+        if (!$this->cards->contains($card)) {
+            $this->cards->add($card);
+            $card->setDeck($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCard(Card $card): static
+    {
+        if ($this->cards->removeElement($card)) {
+            // set the owning side to null (unless already changed)
+            if ($card->getDeck() === $this) {
+                $card->setDeck(null);
+            }
+        }
 
         return $this;
     }
