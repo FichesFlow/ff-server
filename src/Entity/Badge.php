@@ -11,6 +11,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: BadgeRepository::class)]
+#[ORM\Index(name: 'badge_idx_code', columns: ['code'])]
 #[ApiResource]
 class Badge
 {

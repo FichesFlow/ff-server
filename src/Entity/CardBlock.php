@@ -9,6 +9,8 @@ use App\Repository\CardBlockRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: CardBlockRepository::class)]
+#[ORM\Index(name: 'card_block_idx_content_type', columns: ['content_type'])]
+#[ORM\Index(name: 'card_block_idx_content', columns: ['content'])]
 #[ApiResource]
 class CardBlock
 {

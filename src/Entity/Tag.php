@@ -12,6 +12,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: TagRepository::class)]
+#[ORM\Index(name: 'tag_idx_slug', columns: ['slug'])]
 #[ApiResource]
 class Tag
 {

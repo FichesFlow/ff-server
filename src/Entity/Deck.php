@@ -15,6 +15,8 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: DeckRepository::class)]
+#[ORM\Index(name: 'deck_idx_visibility_status', columns: ['visibility', 'status'])]
+#[ORM\Index(name: 'deck_idx_rating_avg_count', columns: ['rating_avg', 'rating_count'])]
 #[ApiResource]
 class Deck
 {

@@ -9,6 +9,7 @@ use App\Repository\CardSideRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: CardSideRepository::class)]
+#[ORM\Index(name: 'card_side_idx_card_side', columns: ['card_id', 'side'])]
 #[ApiResource]
 class CardSide
 {

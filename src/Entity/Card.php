@@ -12,6 +12,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: CardRepository::class)]
+#[ORM\Index(name: 'card_idx_deck_position', columns: ['deck_id', 'position'])]
 #[ApiResource]
 class Card
 {

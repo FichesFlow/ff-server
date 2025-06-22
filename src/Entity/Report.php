@@ -12,6 +12,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity(repositoryClass: ReportRepository::class)]
+#[ORM\Index(name: 'report_idx_status_target', columns: ['status', 'target_type'])]
 #[ApiResource]
 class Report
 {

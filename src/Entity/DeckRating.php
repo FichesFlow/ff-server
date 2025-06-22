@@ -9,6 +9,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: DeckRatingRepository::class)]
+#[ORM\UniqueConstraint(name: 'deck_rating_unique', columns: ['deck_id', 'rater_id'])]
 #[ApiResource]
 class DeckRating
 {
