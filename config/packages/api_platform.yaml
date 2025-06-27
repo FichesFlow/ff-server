@@ -1,7 +1,10 @@
 api_platform:
-    title: Hello API Platform
+    title: ff-server
     version: 1.0.0
     use_symfony_listeners: true
+    formats:
+        jsonld: [ 'application/ld+json' ]
+        multipart: [ 'multipart/form-data' ]
     defaults:
         stateless: true
         cache_headers:
