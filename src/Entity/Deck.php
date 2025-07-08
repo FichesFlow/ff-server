@@ -2,7 +2,13 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
 use App\Entity\Traits\DateAtTrait;
 use App\Entity\Traits\UuidTrait;
 use App\Enum\CountryCodeAlpha2;
@@ -17,7 +23,18 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: DeckRepository::class)]
 #[ORM\Index(name: 'deck_idx_visibility_status', columns: ['visibility', 'status'])]
 #[ORM\Index(name: 'deck_idx_rating_avg_count', columns: ['rating_avg', 'rating_count'])]
-#[ApiResource]
+#[ApiResource(
+    operations: [
+        new Get(),
+        new GetCollection(),
+        new Post(
+            security: "is_fully_authenticated()",
+            securityMessage: "Only authenticated users can create decks",
+        ),
+        new Put(security: "is_granted('ROLE_USER') and object.getOwner() == user"),
+        new Delete(security: "is_granted('ROLE_USER') and object.getOwner() == user")
+    ]
+)]
 class Deck
 {
     use UuidTrait;
@@ -59,7 +76,8 @@ class Deck
     /**
      * @var Collection<int, Card>
      */
-    #[ORM\OneToMany(targetEntity: Card::class, mappedBy: 'deck', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: Card::class, mappedBy: 'deck', cascade: ['persist'], orphanRemoval: true)]
+    #[ApiProperty(writableLink: true)]
     private Collection $cards;
 
     /**
