@@ -6,13 +6,16 @@ use DateTime;
 use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Gedmo\Mapping\Annotation as Gedmo;
 
 trait DateAtTrait
 {
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE)]
+    #[Gedmo\Timestampable(on: 'create')]
     private ?DateTimeImmutable $created_at = null;
 
     #[ORM\Column(type: Types::DATETIMETZ_MUTABLE)]
+    #[Gedmo\Timestampable(on: 'update')]
     private ?DateTime $updated_at = null;
 
     public function __construct()
