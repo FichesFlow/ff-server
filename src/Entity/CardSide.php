@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use App\Entity\Traits\UuidTrait;
 use App\Enum\CardSides;
@@ -23,6 +24,7 @@ class CardSide
     private ?CardSides $side = CardSides::FRONT;
 
     #[ORM\OneToOne(mappedBy: 'card_side', cascade: ['persist', 'remove'])]
+    #[ApiProperty(writableLink: true)]
     private ?CardBlock $cardBlock = null;
 
     public function getCard(): ?Card

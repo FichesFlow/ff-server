@@ -53,32 +53,4 @@ final class LoginController extends AbstractController
 
         return $this->json(['message' => 'Vous êtes enregistré avec succès.'], 201);
     }
-
-    #[Route('/api/login_check', name: 'login_check', methods: ['POST'])]
-    public function login_check(
-        Request                     $request,
-        UserRepository              $userRepository,
-        UserPasswordHasherInterface $passwordHasher,
-        JWTTokenManagerInterface    $JWTManager
-    ): JsonResponse
-    {
-        $payload = $request->getPayload();
-        $email = $payload->get('email');
-        $password = $payload->get('password');
-
-        if (empty($email) || empty($password)) {
-            return $this->json(['message' => 'Tous les champs sont requis.'], 400);
-        }
-
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return $this->json(['message' => 'Adresse e-mail invalide.'], 400);
-        }
-
-        $user = $userRepository->findOneBy(['email' => $email]);
-        if (!$user || !$passwordHasher->isPasswordValid($user, $password)) {
-            return $this->json(['message' => 'Identifiants invalides.'], 400);
-        }
-
-        return $this->json(['token' => $JWTManager->create($user)], 200);
-    }
 }

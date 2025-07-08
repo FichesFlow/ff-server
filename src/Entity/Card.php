@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use App\Entity\Traits\DateAtTrait;
 use App\Entity\Traits\UuidTrait;
@@ -29,7 +30,8 @@ class Card
     /**
      * @var Collection<int, CardSide>
      */
-    #[ORM\OneToMany(targetEntity: CardSide::class, mappedBy: 'card', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: CardSide::class, mappedBy: 'card', cascade: ['persist'], orphanRemoval: true)]
+    #[ApiProperty(writableLink: true)]
     private Collection $cardSides;
 
     public function __construct()
