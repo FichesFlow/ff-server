@@ -25,7 +25,7 @@ final class LoginController extends AbstractController
     ): JsonResponse
     {
         $payload = $request->getPayload();
-        $userName = $payload->get('userName');
+        $userName = $payload->get('username');
         $email = $payload->get('email');
         $password = $payload->get('password');
 
@@ -39,7 +39,7 @@ final class LoginController extends AbstractController
 
         try {
             $newUser = new User();
-            $newUser->setUserName($userName)
+            $newUser->setUsername($userName)
                 ->setEmail($email)
                 ->setPassword($hasher->hashPassword($newUser, $password))
                 ->setCreatedAt(new DateTimeImmutable())
