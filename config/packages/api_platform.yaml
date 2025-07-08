@@ -4,7 +4,6 @@ api_platform:
     use_symfony_listeners: true
     formats:
         jsonld: [ 'application/ld+json' ]
-        multipart: [ 'multipart/form-data' ]
     defaults:
         stateless: true
         cache_headers:
