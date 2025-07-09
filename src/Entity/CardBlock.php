@@ -7,6 +7,7 @@ use App\Entity\Traits\UuidTrait;
 use App\Repository\CardBlockRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: CardBlockRepository::class)]
 #[ORM\Index(name: 'card_block_idx_content', columns: ['content'])]
@@ -20,7 +21,8 @@ class CardBlock
     private ?CardSide $card_side = null;
 
     #[ORM\Column(type: Types::TEXT)]
-    private string $content;
+    #[Groups(['deck:item'])]
+    private ?string $content;
 
     public function getCardSide(): ?CardSide
     {

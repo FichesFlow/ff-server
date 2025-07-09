@@ -11,6 +11,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: CardRepository::class)]
 #[ORM\Index(name: 'card_idx_deck_position', columns: ['deck_id', 'position'])]
@@ -25,6 +26,7 @@ class Card
     private ?Deck $deck = null;
 
     #[ORM\Column(type: Types::SMALLINT)]
+    #[Groups(['deck:item'])]
     private ?int $position = 0;
 
     /**
@@ -32,6 +34,7 @@ class Card
      */
     #[ORM\OneToMany(targetEntity: CardSide::class, mappedBy: 'card', cascade: ['persist'], orphanRemoval: true)]
     #[ApiProperty(writableLink: true)]
+    #[Groups(['deck:item'])]
     private Collection $cardSides;
 
     public function __construct()
