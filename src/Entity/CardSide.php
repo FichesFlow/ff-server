@@ -8,6 +8,7 @@ use App\Entity\Traits\UuidTrait;
 use App\Enum\CardSides;
 use App\Repository\CardSideRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: CardSideRepository::class)]
 #[ORM\Index(name: 'card_side_idx_card_side', columns: ['card_id', 'side'])]
@@ -21,10 +22,12 @@ class CardSide
     private ?Card $card = null;
 
     #[ORM\Column(enumType: self::class)]
+    #[Groups(['deck:item'])]
     private ?CardSides $side = CardSides::FRONT;
 
     #[ORM\OneToOne(mappedBy: 'card_side', cascade: ['persist', 'remove'])]
     #[ApiProperty(writableLink: true)]
+    #[Groups(['deck:item'])]
     private ?CardBlock $cardBlock = null;
 
     public function getCard(): ?Card

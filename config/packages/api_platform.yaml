@@ -3,8 +3,9 @@ api_platform:
     version: 1.0.0
     use_symfony_listeners: true
     formats:
+        json: [ 'application/json' ]
         jsonld: [ 'application/ld+json' ]
     defaults:
         stateless: true
         cache_headers:
-            vary: ['Content-Type', 'Authorization', 'Origin']
+            vary: [ 'Content-Type', 'Authorization', 'Origin' ]

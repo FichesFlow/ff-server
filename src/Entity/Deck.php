@@ -19,15 +19,17 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: DeckRepository::class)]
 #[ORM\Index(name: 'deck_idx_visibility_status', columns: ['visibility', 'status'])]
 #[ORM\Index(name: 'deck_idx_rating_avg_count', columns: ['rating_avg', 'rating_count'])]
 #[ApiResource(
     operations: [
-        new Get(),
-        new GetCollection(),
+        new Get(normalizationContext: ['groups' => ['deck:read', 'deck:item', 'uuid']]),
+        new GetCollection(normalizationContext: ['groups' => ['deck:read']]),
         new Post(
+            normalizationContext: ['groups' => ['deck:read', 'deck:item', 'uuid']],
             security: "is_fully_authenticated()",
             securityMessage: "Only authenticated users can create decks",
         ),
@@ -41,36 +43,46 @@ class Deck
     use DateAtTrait;
 
     #[ORM\ManyToOne(inversedBy: 'decks')]
+    #[Groups(['deck:item'])]
     private ?User $owner = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['deck:read', 'deck:item'])]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['deck:read', 'deck:item'])]
     private ?string $description = null;
 
     #[ORM\Column(nullable: true, enumType: CountryCodeAlpha2::class)]
+    #[Groups(['deck:read', 'deck:item'])]
     private ?CountryCodeAlpha2 $language = null;
 
     #[ORM\Column(enumType: DeckVisibility::class)]
+    #[Groups(['deck:read', 'deck:item'])]
     private ?DeckVisibility $visibility = DeckVisibility::UNLISTED;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 3, scale: 2)]
+    #[Groups(['deck:read', 'deck:item'])]
     private float $rating_avg = 0.00;
 
     #[ORM\Column]
+    #[Groups(['deck:read', 'deck:item'])]
     private int $rating_count = 0;
 
     #[ORM\Column]
+    #[Groups(['deck:read', 'deck:item'])]
     private int $card_count = 0;
 
     #[ORM\Column(enumType: DeckStatus::class)]
+    #[Groups(['deck:read', 'deck:item'])]
     private ?DeckStatus $status = DeckStatus::DRAFT;
 
     /**
      * @var Collection<int, Tag>
      */
     #[ORM\ManyToMany(targetEntity: Tag::class, inversedBy: 'decks')]
+    #[Groups(['deck:read', 'deck:item'])]
     private Collection $tags;
 
     /**
@@ -78,18 +90,21 @@ class Deck
      */
     #[ORM\OneToMany(targetEntity: Card::class, mappedBy: 'deck', cascade: ['persist'], orphanRemoval: true)]
     #[ApiProperty(writableLink: true)]
+    #[Groups(['deck:read', 'deck:item'])]
     private Collection $cards;
 
     /**
      * @var Collection<int, DeckRating>
      */
     #[ORM\OneToMany(targetEntity: DeckRating::class, mappedBy: 'deck', orphanRemoval: true)]
+    #[Groups(['deck:read', 'deck:item'])]
     private Collection $deckRatings;
 
     /**
      * @var Collection<int, DeckComment>
      */
     #[ORM\OneToMany(targetEntity: DeckComment::class, mappedBy: 'deck', orphanRemoval: true)]
+    #[Groups(['deck:read', 'deck:item'])]
     private Collection $deckComments;
 
     public function __construct()
