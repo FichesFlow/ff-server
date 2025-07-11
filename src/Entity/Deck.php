@@ -27,7 +27,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ApiResource(
     operations: [
         new Get(normalizationContext: ['groups' => ['deck:read', 'deck:item', 'uuid']]),
-        new GetCollection(normalizationContext: ['groups' => ['deck:read']]),
+        new GetCollection(normalizationContext: ['groups' => ['deck:read', 'uuid']]),
         new Post(
             normalizationContext: ['groups' => ['deck:read', 'deck:item', 'uuid']],
             security: "is_fully_authenticated()",
