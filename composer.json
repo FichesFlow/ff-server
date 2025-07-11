@@ -19,6 +19,7 @@
         "lexik/jwt-authentication-bundle": "^3.1.1",
         "nelmio/cors-bundle": "*",
         "nelmio/security-bundle": "^3.5",
+        "nelmio/cors-bundle": "^2.5",
         "phpdocumentor/reflection-docblock": "^5.6.2",
         "phpstan/phpdoc-parser": "^2.1",
         "runtime/frankenphp-symfony": "^0.2.0",

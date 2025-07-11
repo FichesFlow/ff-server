@@ -4,12 +4,12 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
 use App\Entity\Traits\UuidTrait;
-use App\Enum\CardContentType;
 use App\Repository\CardBlockRepository;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: CardBlockRepository::class)]
-#[ORM\Index(name: 'card_block_idx_content_type', columns: ['content_type'])]
 #[ORM\Index(name: 'card_block_idx_content', columns: ['content'])]
 #[ApiResource]
 class CardBlock
@@ -20,11 +20,9 @@ class CardBlock
     #[ORM\JoinColumn(nullable: false)]
     private ?CardSide $card_side = null;
 
-    #[ORM\Column(enumType: CardContentType::class)]
-    private ?CardContentType $content_type = CardContentType::TEXT;
-
-    #[ORM\Column(type: 'json', options: ['jsonb' => true])]
-    private array $content = [];
+    #[ORM\Column(type: Types::TEXT)]
+    #[Groups(['deck:item'])]
+    private ?string $content;
 
     public function getCardSide(): ?CardSide
     {
@@ -38,24 +36,12 @@ class CardBlock
         return $this;
     }
 
-    public function getContentType(): ?CardContentType
-    {
-        return $this->content_type;
-    }
-
-    public function setContentType(CardContentType $content_type): static
-    {
-        $this->content_type = $content_type;
-
-        return $this;
-    }
-
-    public function getContent(): array
+    public function getContent(): string
     {
         return $this->content;
     }
 
-    public function setContent(array $content): static
+    public function setContent(string $content): static
     {
         $this->content = $content;
 
