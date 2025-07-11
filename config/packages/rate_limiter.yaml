@@ -1,0 +1,14 @@
+framework:
+  rate_limiter:
+    login:
+      policy: 'fixed_window'
+      limit: 5          # tentatives
+      interval: '1 minute'
+    anonymous_api:
+      policy: 'token_bucket'
+      limit: 100        # requêtes
+      rate: { interval: '1 minute', amount: 100 }
+    authenticated_api:
+      policy: 'token_bucket'
+      limit: 600
+      rate: { interval: '1 minute', amount: 600 }

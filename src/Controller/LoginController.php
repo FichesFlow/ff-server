@@ -12,6 +12,7 @@ use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -21,9 +22,16 @@ final class LoginController extends AbstractController
     public function register(
         Request                     $request,
         EntityManagerInterface      $entityManager,
-        UserPasswordHasherInterface $hasher
+        UserPasswordHasherInterface $hasher,
+        RateLimiterFactoryInterface $anonymousApiLimiter
     ): JsonResponse
     {
+        $limiter = $anonymousApiLimiter->create($request->getClientIp());
+
+        if (false === $limiter->consume(1)->isAccepted()) {
+            throw new TooManyRequestsHttpException();
+        }
+  
         $payload = $request->getPayload();
         $userName = $payload->get('username');
         $email = $payload->get('email');
