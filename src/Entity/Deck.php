@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Delete;
@@ -27,7 +29,11 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ApiResource(
     operations: [
         new Get(normalizationContext: ['groups' => ['deck:read', 'deck:item', 'uuid']]),
-        new GetCollection(normalizationContext: ['groups' => ['deck:read', 'uuid']]),
+        new GetCollection(
+            paginationClientEnabled: true,
+            paginationClientItemsPerPage: true,
+            normalizationContext: ['groups' => ['deck:read', 'uuid']]
+        ),
         new Post(
             normalizationContext: ['groups' => ['deck:read', 'deck:item', 'uuid']],
             security: "is_fully_authenticated()",
@@ -59,6 +65,7 @@ class Deck
     private ?CountryCodeAlpha2 $language = null;
 
     #[ORM\Column(enumType: DeckVisibility::class)]
+    #[ApiFilter(SearchFilter::class, strategy: 'exact')]
     #[Groups(['deck:read', 'deck:item'])]
     private ?DeckVisibility $visibility = DeckVisibility::UNLISTED;
 
@@ -75,6 +82,7 @@ class Deck
     private int $card_count = 0;
 
     #[ORM\Column(enumType: DeckStatus::class)]
+    #[ApiFilter(SearchFilter::class, strategy: 'exact')]
     #[Groups(['deck:read', 'deck:item'])]
     private ?DeckStatus $status = DeckStatus::DRAFT;
 
