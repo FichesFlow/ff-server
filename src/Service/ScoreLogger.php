@@ -47,7 +47,11 @@ readonly class ScoreLogger
         $scoreEvent->setType($type);
         $scoreEvent->setValue($points);
 
+        // Update the user's score
+        $user->addToScore($points);
+
         $this->entityManager->persist($scoreEvent);
+        $this->entityManager->persist($user);
         $this->entityManager->flush();
 
         return $scoreEvent;
