@@ -2,7 +2,10 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use App\Entity\Traits\DateAtTrait;
 use App\Entity\Traits\UuidTrait;
 use App\Repository\UserRepository;
@@ -11,24 +14,45 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_USERNAME', fields: ['username'])]
-#[ApiResource]
+#[ApiResource(
+    operations: [
+        new Get(normalizationContext: ['groups' => ['user:read', 'user:item', 'user:level']]),
+        new GetCollection(normalizationContext: ['groups' => ['user:read']])
+    ]
+)]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     use UuidTrait;
     use DateAtTrait;
 
+    private const LEVEL_THRESHOLDS = [
+        1 => 0,
+        2 => 100,
+        3 => 250,
+        4 => 500,
+        5 => 1000,
+        6 => 2000,
+        7 => 3500,
+        8 => 5000,
+        9 => 7500,
+        10 => 10000
+    ];
+
     #[ORM\Column(length: 180)]
+    #[Groups(['deck:item'])]
     private ?string $email = null;
 
     /**
      * @var list<string> The user roles
      */
     #[ORM\Column]
+    #[Groups(['user:item'])]
     private array $roles = [];
 
     /**
@@ -38,9 +62,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
     #[ORM\Column(length: 50)]
+    #[Groups(['user:read'])]
     private ?string $username = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['user:read'])]
     private ?string $avatar_url = null;
 
     /**
@@ -401,18 +427,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getScore(): ?int
-    {
-        return $this->score;
-    }
-
-    public function setScore(int $score): static
-    {
-        $this->score = $score;
-
-        return $this;
-    }
-
     public function recalculateScore(): static
     {
         $total = 0;
@@ -429,6 +443,85 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->score += $points;
 
         return $this;
+    }
+
+    /**
+     * Get the points needed to reach the next level
+     */
+    #[Groups(['user:level'])]
+    #[ApiProperty(description: 'Points needed to reach the next level (null if at max level)')]
+    public function getPointsToNextLevel(): ?int
+    {
+        $currentLevel = $this->getLevel();
+        $currentScore = $this->getScore();
+
+        // If at max level, return null
+        if ($currentLevel >= max(array_keys(self::LEVEL_THRESHOLDS))) {
+            return null;
+        }
+
+        $nextLevel = $currentLevel + 1;
+        $nextLevelThreshold = self::LEVEL_THRESHOLDS[$nextLevel];
+
+        return $nextLevelThreshold - $currentScore;
+    }
+
+    /**
+     * Get the user's current level based on their score
+     */
+    #[Groups(['user:level'])]
+    #[ApiProperty(description: "The user's current level based on their score")]
+    public function getLevel(): int
+    {
+        $score = $this->getScore();
+        $level = 1;
+
+        foreach (self::LEVEL_THRESHOLDS as $lvl => $threshold) {
+            if ($score >= $threshold) {
+                $level = $lvl;
+            } else {
+                break;
+            }
+        }
+
+        return $level;
+    }
+
+    public function getScore(): ?int
+    {
+        return $this->score;
+    }
+
+    public function setScore(int $score): static
+    {
+        $this->score = $score;
+
+        return $this;
+    }
+
+    /**
+     * Get the progress percentage to the next level (0-100)
+     */
+    #[Groups(['user:level'])]
+    #[ApiProperty(description: 'Progress percentage toward the next level (0-100)')]
+    public function getLevelProgress(): ?float
+    {
+        $currentLevel = $this->getLevel();
+        $currentScore = $this->getScore();
+
+        // If at max level, return 100%
+        if ($currentLevel >= max(array_keys(self::LEVEL_THRESHOLDS))) {
+            return 100.0;
+        }
+
+        $nextLevel = $currentLevel + 1;
+        $currentLevelThreshold = self::LEVEL_THRESHOLDS[$currentLevel];
+        $nextLevelThreshold = self::LEVEL_THRESHOLDS[$nextLevel];
+
+        $levelRange = $nextLevelThreshold - $currentLevelThreshold;
+        $scoreInLevel = $currentScore - $currentLevelThreshold;
+
+        return min(100.0, round(($scoreInLevel / $levelRange) * 100, 1));
     }
 
 }
