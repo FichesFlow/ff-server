@@ -79,6 +79,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: DeckComment::class, mappedBy: 'commenter')]
     private Collection $deckComments;
 
+    /**
+     * @var Collection<int, ScoreEvent>
+     */
+    #[ORM\OneToMany(targetEntity: ScoreEvent::class, mappedBy: 'scorer', orphanRemoval: true)]
+    private Collection $scoreEvents;
+
     public function __construct()
     {
         $this->userBadges = new ArrayCollection();
@@ -87,6 +93,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->decks = new ArrayCollection();
         $this->deckRatings = new ArrayCollection();
         $this->deckComments = new ArrayCollection();
+        $this->scoreEvents = new ArrayCollection();
     }
 
     public function getEmail(): ?string
@@ -355,6 +362,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             // set the owning side to null (unless already changed)
             if ($deckComment->getCommenter() === $this) {
                 $deckComment->setCommenter(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ScoreEvent>
+     */
+    public function getScoreEvents(): Collection
+    {
+        return $this->scoreEvents;
+    }
+
+    public function addScoreEvent(ScoreEvent $scoreEvent): static
+    {
+        if (!$this->scoreEvents->contains($scoreEvent)) {
+            $this->scoreEvents->add($scoreEvent);
+            $scoreEvent->setScorer($this);
+        }
+
+        return $this;
+    }
+
+    public function removeScoreEvent(ScoreEvent $scoreEvent): static
+    {
+        if ($this->scoreEvents->removeElement($scoreEvent)) {
+            // set the owning side to null (unless already changed)
+            if ($scoreEvent->getScorer() === $this) {
+                $scoreEvent->setScorer(null);
             }
         }
 
