@@ -85,6 +85,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: ScoreEvent::class, mappedBy: 'scorer', orphanRemoval: true)]
     private Collection $scoreEvents;
 
+    #[ORM\Column(options: ["default" => 0])]
+    private ?int $score = 0;
+
     public function __construct()
     {
         $this->userBadges = new ArrayCollection();
@@ -394,6 +397,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
                 $scoreEvent->setScorer(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getScore(): ?int
+    {
+        return $this->score;
+    }
+
+    public function setScore(int $score): static
+    {
+        $this->score = $score;
+
+        return $this;
+    }
+
+    public function recalculateScore(): static
+    {
+        $total = 0;
+        foreach ($this->scoreEvents as $event) {
+            $total += $event->getValue();
+        }
+        $this->score = $total;
+
+        return $this;
+    }
+
+    public function addToScore(int $points): static
+    {
+        $this->score += $points;
 
         return $this;
     }
