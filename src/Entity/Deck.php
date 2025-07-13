@@ -53,11 +53,11 @@ class Deck
     private ?User $owner = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['deck:read', 'deck:item'])]
+    #[Groups(['deck:read', 'deck:item', 'queue:item'])]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Groups(['deck:read', 'deck:item'])]
+    #[Groups(['deck:read', 'deck:item', 'queue:item'])]
     private ?string $description = null;
 
     #[ORM\Column(nullable: true, enumType: CountryCodeAlpha2::class)]
@@ -78,7 +78,7 @@ class Deck
     private int $rating_count = 0;
 
     #[ORM\Column]
-    #[Groups(['deck:read', 'deck:item'])]
+    #[Groups(['deck:read', 'deck:item', 'queue:item'])]
     private int $card_count = 0;
 
     #[ORM\Column(enumType: DeckStatus::class)]
