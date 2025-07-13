@@ -114,6 +114,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(options: ["default" => 0])]
     private ?int $score = 0;
 
+    /**
+     * @var Collection<int, ReviewQueue>
+     */
+    #[ORM\OneToMany(targetEntity: ReviewQueue::class, mappedBy: 'owner', orphanRemoval: true)]
+    private Collection $reviewQueues;
+
     public function __construct()
     {
         $this->userBadges = new ArrayCollection();
@@ -123,6 +129,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->deckRatings = new ArrayCollection();
         $this->deckComments = new ArrayCollection();
         $this->scoreEvents = new ArrayCollection();
+        $this->reviewQueues = new ArrayCollection();
     }
 
     public function getEmail(): ?string
@@ -522,6 +529,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $scoreInLevel = $currentScore - $currentLevelThreshold;
 
         return min(100.0, round(($scoreInLevel / $levelRange) * 100, 1));
+    }
+
+    /**
+     * @return Collection<int, ReviewQueue>
+     */
+    public function getReviewQueues(): Collection
+    {
+        return $this->reviewQueues;
+    }
+
+    public function addReviewQueue(ReviewQueue $reviewQueue): static
+    {
+        if (!$this->reviewQueues->contains($reviewQueue)) {
+            $this->reviewQueues->add($reviewQueue);
+            $reviewQueue->setOwner($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReviewQueue(ReviewQueue $reviewQueue): static
+    {
+        if ($this->reviewQueues->removeElement($reviewQueue)) {
+            // set the owning side to null (unless already changed)
+            if ($reviewQueue->getOwner() === $this) {
+                $reviewQueue->setOwner(null);
+            }
+        }
+
+        return $this;
     }
 
 }
