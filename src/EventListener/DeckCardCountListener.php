@@ -30,7 +30,7 @@ readonly class DeckCardCountListener
     private function updateDeckCardCount(Card $card): void
     {
         $deck = $card->getDeck();
-        if (!$deck) {
+        if (!$deck || $deck->getId() === null) {
             return;
         }
 
