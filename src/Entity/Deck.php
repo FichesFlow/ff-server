@@ -39,7 +39,11 @@ use Symfony\Component\Serializer\Annotation\Groups;
             security: "is_fully_authenticated()",
             securityMessage: "Only authenticated users can create decks",
         ),
-        new Put(security: "is_granted('ROLE_USER') and object.getOwner() == user"),
+        new Put(
+            denormalizationContext: ['groups' => ['deck:update']],
+            security: "is_granted('ROLE_USER') and object.getOwner() == user"
+
+        ),
         new Delete(security: "is_granted('ROLE_USER') and object.getOwner() == user")
     ]
 )]
@@ -53,20 +57,20 @@ class Deck
     private ?User $owner = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['deck:read', 'deck:item', 'queue:item'])]
+    #[Groups(['deck:read', 'deck:item', 'queue:item', 'deck:update'])]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Groups(['deck:read', 'deck:item', 'queue:item'])]
+    #[Groups(['deck:read', 'deck:item', 'queue:item', 'deck:update'])]
     private ?string $description = null;
 
     #[ORM\Column(nullable: true, enumType: CountryCodeAlpha2::class)]
-    #[Groups(['deck:read', 'deck:item'])]
+    #[Groups(['deck:read', 'deck:item', 'deck:update'])]
     private ?CountryCodeAlpha2 $language = null;
 
     #[ORM\Column(enumType: DeckVisibility::class)]
     #[ApiFilter(SearchFilter::class, strategy: 'exact')]
-    #[Groups(['deck:read', 'deck:item'])]
+    #[Groups(['deck:read', 'deck:item', 'deck:update'])]
     private ?DeckVisibility $visibility = DeckVisibility::UNLISTED;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 3, scale: 2)]
@@ -83,14 +87,14 @@ class Deck
 
     #[ORM\Column(enumType: DeckStatus::class)]
     #[ApiFilter(SearchFilter::class, strategy: 'exact')]
-    #[Groups(['deck:read', 'deck:item'])]
+    #[Groups(['deck:read', 'deck:item', 'deck:update'])]
     private ?DeckStatus $status = DeckStatus::DRAFT;
 
     /**
      * @var Collection<int, Tag>
      */
     #[ORM\ManyToMany(targetEntity: Tag::class, inversedBy: 'decks')]
-    #[Groups(['deck:read', 'deck:item'])]
+    #[Groups(['deck:read', 'deck:item', 'deck:update'])]
     private Collection $tags;
 
     /**
