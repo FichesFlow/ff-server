@@ -45,7 +45,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     ];
 
     #[ORM\Column(length: 180)]
-    #[Groups(['deck:item'])]
+    #[Groups(['user:item'])]
     private ?string $email = null;
 
     /**
@@ -120,6 +120,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: ReviewQueue::class, mappedBy: 'owner', orphanRemoval: true)]
     private Collection $reviewQueues;
 
+    /**
+     * @var Collection<int, ReviewSession>
+     */
+    #[ORM\OneToMany(targetEntity: ReviewSession::class, mappedBy: 'reviewer', orphanRemoval: true)]
+    private Collection $reviewSessions;
+
+    /**
+     * @var Collection<int, ReviewEvent>
+     */
+    #[ORM\OneToMany(targetEntity: ReviewEvent::class, mappedBy: 'reviewer', orphanRemoval: true)]
+    private Collection $reviewEvents;
+
     public function __construct()
     {
         $this->userBadges = new ArrayCollection();
@@ -130,6 +142,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->deckComments = new ArrayCollection();
         $this->scoreEvents = new ArrayCollection();
         $this->reviewQueues = new ArrayCollection();
+        $this->reviewSessions = new ArrayCollection();
+        $this->reviewEvents = new ArrayCollection();
     }
 
     public function getEmail(): ?string
@@ -555,6 +569,66 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             // set the owning side to null (unless already changed)
             if ($reviewQueue->getOwner() === $this) {
                 $reviewQueue->setOwner(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ReviewSession>
+     */
+    public function getReviewSessions(): Collection
+    {
+        return $this->reviewSessions;
+    }
+
+    public function addReviewSession(ReviewSession $reviewSession): static
+    {
+        if (!$this->reviewSessions->contains($reviewSession)) {
+            $this->reviewSessions->add($reviewSession);
+            $reviewSession->setReviewer($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReviewSession(ReviewSession $reviewSession): static
+    {
+        if ($this->reviewSessions->removeElement($reviewSession)) {
+            // set the owning side to null (unless already changed)
+            if ($reviewSession->getReviewer() === $this) {
+                $reviewSession->setReviewer(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ReviewEvent>
+     */
+    public function getReviewEvents(): Collection
+    {
+        return $this->reviewEvents;
+    }
+
+    public function addReviewEvent(ReviewEvent $reviewEvent): static
+    {
+        if (!$this->reviewEvents->contains($reviewEvent)) {
+            $this->reviewEvents->add($reviewEvent);
+            $reviewEvent->setReviewer($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReviewEvent(ReviewEvent $reviewEvent): static
+    {
+        if ($this->reviewEvents->removeElement($reviewEvent)) {
+            // set the owning side to null (unless already changed)
+            if ($reviewEvent->getReviewer() === $this) {
+                $reviewEvent->setReviewer(null);
             }
         }
 

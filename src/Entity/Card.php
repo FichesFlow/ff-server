@@ -37,9 +37,16 @@ class Card
     #[Groups(['deck:item'])]
     private Collection $cardSides;
 
+    /**
+     * @var Collection<int, ReviewEvent>
+     */
+    #[ORM\OneToMany(targetEntity: ReviewEvent::class, mappedBy: 'card', orphanRemoval: true)]
+    private Collection $reviewEvents;
+
     public function __construct()
     {
         $this->cardSides = new ArrayCollection();
+        $this->reviewEvents = new ArrayCollection();
     }
 
     public function getDeck(): ?Deck
@@ -90,6 +97,36 @@ class Card
             // set the owning side to null (unless already changed)
             if ($cardSide->getCard() === $this) {
                 $cardSide->setCard(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ReviewEvent>
+     */
+    public function getReviewEvents(): Collection
+    {
+        return $this->reviewEvents;
+    }
+
+    public function addReviewEvent(ReviewEvent $reviewEvent): static
+    {
+        if (!$this->reviewEvents->contains($reviewEvent)) {
+            $this->reviewEvents->add($reviewEvent);
+            $reviewEvent->setCard($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReviewEvent(ReviewEvent $reviewEvent): static
+    {
+        if ($this->reviewEvents->removeElement($reviewEvent)) {
+            // set the owning side to null (unless already changed)
+            if ($reviewEvent->getCard() === $this) {
+                $reviewEvent->setCard(null);
             }
         }
 
