@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Card;
+use App\Entity\Deck;
 use App\Entity\ReviewProgress;
 use App\Entity\User;
 use DateTimeInterface;
@@ -69,5 +70,28 @@ class ReviewProgressRepository extends ServiceEntityRepository
         }
 
         return (int) $qb->getQuery()->getSingleScalarResult();
+    }
+
+    public function findDueForUserInDeck(User $user, Deck $deck, DateTimeInterface $beforeDate = null, int $limit = null): array
+    {
+        $qb = $this->createQueryBuilder('rp')
+            ->join('rp.card', 'c')
+            ->andWhere('rp.reviewer = :user')
+            ->andWhere('c.deck = :deck')
+            ->setParameter('user', $user)
+            ->setParameter('deck', $deck);
+
+        if ($beforeDate) {
+            $qb->andWhere('rp.due_at <= :beforeDate')
+               ->setParameter('beforeDate', $beforeDate);
+        }
+
+        $qb->orderBy('rp.due_at', 'ASC');
+
+        if ($limit !== null) {
+            $qb->setMaxResults($limit);
+        }
+
+        return $qb->getQuery()->getResult();
     }
 }
