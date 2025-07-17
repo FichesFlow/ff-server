@@ -36,7 +36,7 @@ class ReviewProgressRepository extends ServiceEntityRepository
         }
     }
 
-    public function findDueForUser(User $user, DateTimeInterface $beforeDate = null): array
+    public function findDueForUser(User $user, DateTimeInterface $beforeDate = null, int $limit = null): array
     {
         $qb = $this->createQueryBuilder('rp')
             ->andWhere('rp.reviewer = :user')
@@ -47,8 +47,27 @@ class ReviewProgressRepository extends ServiceEntityRepository
                 ->setParameter('beforeDate', $beforeDate);
         }
 
-        return $qb->orderBy('rp.due_at', 'ASC')
-            ->getQuery()
-            ->getResult();
+        $qb->orderBy('rp.due_at', 'ASC');
+
+        if ($limit !== null) {
+            $qb->setMaxResults($limit);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    public function countDueForUser(User $user, DateTimeInterface $beforeDate = null): int
+    {
+        $qb = $this->createQueryBuilder('rp')
+            ->select('COUNT(rp.id)')
+            ->andWhere('rp.reviewer = :user')
+            ->setParameter('user', $user);
+
+        if ($beforeDate) {
+            $qb->andWhere('rp.due_at <= :beforeDate')
+                ->setParameter('beforeDate', $beforeDate);
+        }
+
+        return (int) $qb->getQuery()->getSingleScalarResult();
     }
 }
