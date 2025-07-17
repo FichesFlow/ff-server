@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Auto-generated Migration: Please modify to your needs!
  */
-final class Version20250717130529 extends AbstractMigration
+final class Version20250717134230 extends AbstractMigration
 {
     public function getDescription(): string
     {
@@ -30,7 +30,7 @@ final class Version20250717130529 extends AbstractMigration
         $this->addSql('COMMENT ON COLUMN review_progress.card_id IS \'(DC2Type:uuid)\'');
         $this->addSql('ALTER TABLE review_progress ADD CONSTRAINT FK_1437B4D70574616 FOREIGN KEY (reviewer_id) REFERENCES "user" (id) NOT DEFERRABLE INITIALLY IMMEDIATE');
         $this->addSql('ALTER TABLE review_progress ADD CONSTRAINT FK_1437B4D4ACC9A20 FOREIGN KEY (card_id) REFERENCES card (id) NOT DEFERRABLE INITIALLY IMMEDIATE');
-        $this->addSql('ALTER TABLE review_session ADD origin VARCHAR(255) NOT NULL');
+        $this->addSql('ALTER TABLE review_session ADD origin VARCHAR(255) DEFAULT \'queue\' NOT NULL');
     }
 
     public function down(Schema $schema): void
