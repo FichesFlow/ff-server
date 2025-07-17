@@ -125,6 +125,12 @@ class Deck
     #[ORM\OneToMany(targetEntity: ReviewQueue::class, mappedBy: 'deck', orphanRemoval: true)]
     private Collection $reviewQueues;
 
+    /**
+     * @var Collection<int, ReviewSession>
+     */
+    #[ORM\OneToMany(targetEntity: ReviewSession::class, mappedBy: 'deck')]
+    private Collection $reviewSessions;
+
     public function __construct()
     {
         $this->tags = new ArrayCollection();
@@ -132,6 +138,7 @@ class Deck
         $this->deckRatings = new ArrayCollection();
         $this->deckComments = new ArrayCollection();
         $this->reviewQueues = new ArrayCollection();
+        $this->reviewSessions = new ArrayCollection();
     }
 
     public function getOwner(): ?User
@@ -380,6 +387,36 @@ class Deck
             // set the owning side to null (unless already changed)
             if ($reviewQueue->getDeck() === $this) {
                 $reviewQueue->setDeck(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ReviewSession>
+     */
+    public function getReviewSessions(): Collection
+    {
+        return $this->reviewSessions;
+    }
+
+    public function addReviewSession(ReviewSession $reviewSession): static
+    {
+        if (!$this->reviewSessions->contains($reviewSession)) {
+            $this->reviewSessions->add($reviewSession);
+            $reviewSession->setDeck($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReviewSession(ReviewSession $reviewSession): static
+    {
+        if ($this->reviewSessions->removeElement($reviewSession)) {
+            // set the owning side to null (unless already changed)
+            if ($reviewSession->getDeck() === $this) {
+                $reviewSession->setDeck(null);
             }
         }
 
