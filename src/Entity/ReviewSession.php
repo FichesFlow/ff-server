@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use App\Entity\Traits\UuidTrait;
 use App\Enum\ReviewMode;
 use App\Repository\ReviewSessionRepository;
@@ -12,37 +14,51 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: ReviewSessionRepository::class)]
-#[ApiResource]
+#[ApiResource(
+    operations: [
+        new Get(normalizationContext: ['groups' => ['review_session:read', 'review_session:item', 'uuid']]),
+        new GetCollection(normalizationContext: ['groups' => ['review_session:read', 'uuid']]),
+    ]
+)]
 class ReviewSession
 {
     use UuidTrait;
 
     #[ORM\ManyToOne(inversedBy: 'reviewSessions')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['review_session:item'])]
     private ?User $reviewer = null;
 
     #[ORM\ManyToOne(inversedBy: 'reviewSessions')]
+    #[Groups(['review_session:read'])]
     private ?Deck $deck = null;
 
     #[ORM\Column(enumType: ReviewMode::class)]
+    #[Groups(['review_session:item'])]
     private ?ReviewMode $mode = null;
 
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE)]
     #[Gedmo\Timestampable(on: 'create')]
+    #[Groups(['review_session:item'])]
     private ?DateTimeImmutable $started_at = null;
 
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
+    #[Groups(['review_session:item'])]
     private ?DateTimeImmutable $finished_at = null;
 
     #[ORM\Column(options: ['default' => 0])]
+    #[Groups(['review_session:item'])]
     private ?int $cards_seen = 0;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 5, scale: 2, options: ['default' => '0.00'])]
+    #[Groups(['review_session:item'])]
     private ?float $success_pct = 0.00;
 
     #[ORM\Column(options: ['default' => 0])]
+    #[Groups(['review_session:item'])]
     private ?int $xp_gained = 0;
 
     /**

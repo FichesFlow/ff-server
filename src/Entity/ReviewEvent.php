@@ -3,21 +3,36 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Post;
 use App\Entity\Traits\UuidTrait;
 use App\Repository\ReviewEventRepository;
 use DateTime;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
+use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ReviewEventRepository::class)]
-#[ApiResource]
+#[ApiResource(
+    operations: [
+        new Get(),
+        new GetCollection(),
+        new Post(
+            denormalizationContext: ['groups' => ['review_event:create']],
+            validationContext: ['groups' => ['Default', 'review_event:create']]
+        )
+    ]
+)]
 class ReviewEvent
 {
     use UuidTrait;
 
     #[ORM\ManyToOne(inversedBy: 'reviewEvents')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['review_event:create'])]
     private ?ReviewSession $session = null;
 
     #[ORM\ManyToOne(inversedBy: 'reviewEvents')]
@@ -26,9 +41,14 @@ class ReviewEvent
 
     #[ORM\ManyToOne(inversedBy: 'reviewEvents')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull(groups: ['review_event:create'])]
+    #[Groups(['review_event:create'])]
     private ?Card $card = null;
 
     #[ORM\Column(type: Types::SMALLINT)]
+    #[Assert\Choice(choices: [0, 3, 5], groups: ['review_event:create'])]
+    #[Assert\NotNull(groups: ['review_event:create'])]
+    #[Groups(['review_event:create'])]
     private ?int $score = null;
 
     #[ORM\Column(type: Types::DATETIMETZ_MUTABLE)]
