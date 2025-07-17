@@ -7,6 +7,7 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use App\Entity\Traits\UuidTrait;
 use App\Enum\ReviewMode;
+use App\Enum\ReviewSessionOrigin;
 use App\Repository\ReviewSessionRepository;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -66,6 +67,9 @@ class ReviewSession
      */
     #[ORM\OneToMany(targetEntity: ReviewEvent::class, mappedBy: 'session', orphanRemoval: true)]
     private Collection $reviewEvents;
+
+    #[ORM\Column(enumType: ReviewSessionOrigin::class)]
+    private ?ReviewSessionOrigin $origin = null;
 
     public function __construct()
     {
@@ -194,6 +198,18 @@ class ReviewSession
                 $reviewEvent->setSession(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getOrigin(): ?ReviewSessionOrigin
+    {
+        return $this->origin;
+    }
+
+    public function setOrigin(ReviewSessionOrigin $origin): static
+    {
+        $this->origin = $origin;
 
         return $this;
     }

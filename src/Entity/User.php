@@ -132,6 +132,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: ReviewEvent::class, mappedBy: 'reviewer', orphanRemoval: true)]
     private Collection $reviewEvents;
 
+    /**
+     * @var Collection<int, ReviewProgress>
+     */
+    #[ORM\OneToMany(targetEntity: ReviewProgress::class, mappedBy: 'reviewer', orphanRemoval: true)]
+    private Collection $reviewProgress;
+
     public function __construct()
     {
         $this->userBadges = new ArrayCollection();
@@ -144,6 +150,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->reviewQueues = new ArrayCollection();
         $this->reviewSessions = new ArrayCollection();
         $this->reviewEvents = new ArrayCollection();
+        $this->reviewProgress = new ArrayCollection();
     }
 
     public function getEmail(): ?string
@@ -629,6 +636,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             // set the owning side to null (unless already changed)
             if ($reviewEvent->getReviewer() === $this) {
                 $reviewEvent->setReviewer(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ReviewProgress>
+     */
+    public function getReviewProgress(): Collection
+    {
+        return $this->reviewProgress;
+    }
+
+    public function addReviewProgress(ReviewProgress $reviewProgress): static
+    {
+        if (!$this->reviewProgress->contains($reviewProgress)) {
+            $this->reviewProgress->add($reviewProgress);
+            $reviewProgress->setReviewer($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReviewProgress(ReviewProgress $reviewProgress): static
+    {
+        if ($this->reviewProgress->removeElement($reviewProgress)) {
+            // set the owning side to null (unless already changed)
+            if ($reviewProgress->getReviewer() === $this) {
+                $reviewProgress->setReviewer(null);
             }
         }
 

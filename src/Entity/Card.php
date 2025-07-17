@@ -43,10 +43,17 @@ class Card
     #[ORM\OneToMany(targetEntity: ReviewEvent::class, mappedBy: 'card', orphanRemoval: true)]
     private Collection $reviewEvents;
 
+    /**
+     * @var Collection<int, ReviewProgress>
+     */
+    #[ORM\OneToMany(targetEntity: ReviewProgress::class, mappedBy: 'card', orphanRemoval: true)]
+    private Collection $reviewProgress;
+
     public function __construct()
     {
         $this->cardSides = new ArrayCollection();
         $this->reviewEvents = new ArrayCollection();
+        $this->reviewProgress = new ArrayCollection();
     }
 
     public function getDeck(): ?Deck
@@ -127,6 +134,36 @@ class Card
             // set the owning side to null (unless already changed)
             if ($reviewEvent->getCard() === $this) {
                 $reviewEvent->setCard(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ReviewProgress>
+     */
+    public function getReviewProgress(): Collection
+    {
+        return $this->reviewProgress;
+    }
+
+    public function addReviewProgress(ReviewProgress $reviewProgress): static
+    {
+        if (!$this->reviewProgress->contains($reviewProgress)) {
+            $this->reviewProgress->add($reviewProgress);
+            $reviewProgress->setCard($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReviewProgress(ReviewProgress $reviewProgress): static
+    {
+        if ($this->reviewProgress->removeElement($reviewProgress)) {
+            // set the owning side to null (unless already changed)
+            if ($reviewProgress->getCard() === $this) {
+                $reviewProgress->setCard(null);
             }
         }
 
