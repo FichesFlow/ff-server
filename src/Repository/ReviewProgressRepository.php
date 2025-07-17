@@ -2,7 +2,10 @@
 
 namespace App\Repository;
 
+use App\Entity\Card;
 use App\Entity\ReviewProgress;
+use App\Entity\User;
+use DateTimeInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -16,28 +19,36 @@ class ReviewProgressRepository extends ServiceEntityRepository
         parent::__construct($registry, ReviewProgress::class);
     }
 
-    //    /**
-    //     * @return ReviewProgress[] Returns an array of ReviewProgress objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('r')
-    //            ->andWhere('r.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('r.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+    public function findOneByUserAndCard(User $user, Card $card): ?ReviewProgress
+    {
+        return $this->findOneBy([
+            'reviewer' => $user,
+            'card' => $card,
+        ]);
+    }
 
-    //    public function findOneBySomeField($value): ?ReviewProgress
-    //    {
-    //        return $this->createQueryBuilder('r')
-    //            ->andWhere('r.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+    public function save(ReviewProgress $progress, bool $flush = false): void
+    {
+        $this->getEntityManager()->persist($progress);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    public function findDueForUser(User $user, DateTimeInterface $beforeDate = null): array
+    {
+        $qb = $this->createQueryBuilder('rp')
+            ->andWhere('rp.reviewer = :user')
+            ->setParameter('user', $user);
+
+        if ($beforeDate) {
+            $qb->andWhere('rp.due_at <= :beforeDate')
+                ->setParameter('beforeDate', $beforeDate);
+        }
+
+        return $qb->orderBy('rp.due_at', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }

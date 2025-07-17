@@ -68,7 +68,7 @@ class ReviewSession
     #[ORM\OneToMany(targetEntity: ReviewEvent::class, mappedBy: 'session', orphanRemoval: true)]
     private Collection $reviewEvents;
 
-    #[ORM\Column(enumType: ReviewSessionOrigin::class)]
+    #[ORM\Column(enumType: ReviewSessionOrigin::class, options: ['default' => ReviewSessionOrigin::QUEUE])]
     private ?ReviewSessionOrigin $origin = null;
 
     public function __construct()

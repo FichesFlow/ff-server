@@ -5,7 +5,10 @@ namespace App\EventSubscriber;
 use ApiPlatform\Symfony\EventListener\EventPriorities;
 use App\Entity\ReviewEvent;
 use App\Entity\User;
+use App\Enum\ReviewSessionOrigin;
 use App\Repository\ReviewSessionRepository;
+use App\Service\ProgressUpdater;
+use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use LogicException;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -19,7 +22,8 @@ readonly class ReviewEventSubscriber implements EventSubscriberInterface
     public function __construct(
         private Security                $security,
         private ReviewSessionRepository $sessionRepository,
-        private EntityManagerInterface  $entityManager
+        private EntityManagerInterface  $entityManager,
+        private ProgressUpdater         $progressUpdater
     )
     {
     }
@@ -29,7 +33,8 @@ readonly class ReviewEventSubscriber implements EventSubscriberInterface
         return [
             KernelEvents::VIEW => [
                 ['processReviewEvent', EventPriorities::PRE_WRITE],
-                ['updateSessionStatistics', EventPriorities::POST_WRITE]
+                ['updateSessionStatistics', EventPriorities::POST_WRITE],
+                ['updateReviewProgress', EventPriorities::POST_WRITE + 1]
             ]
         ];
     }
@@ -106,6 +111,37 @@ readonly class ReviewEventSubscriber implements EventSubscriberInterface
         $session->setSuccessPct($successPct);
 
         $this->entityManager->persist($session);
+        $this->entityManager->flush();
+    }
+
+    public function updateReviewProgress(ViewEvent $event): void
+    {
+        $reviewEvent = $event->getControllerResult();
+        $method = $event->getRequest()->getMethod();
+
+        if (!$reviewEvent instanceof ReviewEvent || Request::METHOD_POST !== $method) {
+            return;
+        }
+
+        // Skip progress update for sessions that are not from the queue
+        if (
+            $reviewEvent->getSession() &&
+            !$reviewEvent->getSession()->getOrigin() == ReviewSessionOrigin::QUEUE
+        ) {
+            return;
+        }
+
+        $user = $reviewEvent->getReviewer();
+        $card = $reviewEvent->getCard();
+        $score = $reviewEvent->getScore();
+        $reviewedAt = $reviewEvent->getReviewedAt() ?? new DateTime();
+
+        if (!$user || !$card) {
+            return;
+        }
+
+        // Update SRS progress for this user-card pair
+        $this->progressUpdater->update($user, $card, $score, $reviewedAt);
         $this->entityManager->flush();
     }
 }
