@@ -36,7 +36,8 @@ class ReviewSessionController extends AbstractController
         DeckRepository           $deckRepository,
         CardRepository           $cardRepository,
         ReviewProgressRepository $reviewProgressRepository,
-        ValidatorInterface       $validator
+        ValidatorInterface       $validator,
+        SerializerInterface      $serializer
     ): Response
     {
         if ($request->getContent() === '') {
@@ -62,10 +63,16 @@ class ReviewSessionController extends AbstractController
                     ])
                 ])
             ],
-            'limit' => [
+            'dueLimit' => [
                 new Assert\Optional([
                     new Assert\Type('integer'),
-                    new Assert\Range(['min' => 1, 'max' => 50])
+                    new Assert\Range(['min' => 0, 'max' => 50])
+                ])
+            ],
+            'newCount' => [
+                new Assert\Optional([
+                    new Assert\Type('integer'),
+                    new Assert\Range(['min' => 0, 'max' => 50])
                 ])
             ]
         ]);
@@ -94,19 +101,18 @@ class ReviewSessionController extends AbstractController
         } else {
             // Queue mode: auto-select cards
             $origin = ReviewSessionOrigin::QUEUE;
-            $limit = $data['limit'] ?? 20;
+            $dueLimit = $data['dueLimit'] ?? 20;
+            $newCount = $data['newCount'] ?? 0;
             $now = new DateTime();
 
-            // Get due cards first
-            $dueProgressRecords = $reviewProgressRepository->findDueForUserInDeck($user, $deck, $now, $limit);
+            // Get due cards first (up to dueLimit)
+            $dueProgressRecords = $reviewProgressRepository->findDueForUserInDeck($user, $deck, $now, $dueLimit);
             $cards = array_map(fn($progress) => $progress->getCard(), $dueProgressRecords);
 
-            // If we need more cards, get never-seen cards
-            if (count($cards) < $limit) {
-                $remainingLimit = $limit - count($cards);
+            // If newCount is specified, get that many never-seen cards
+            if ($newCount > 0) {
                 $seenCardIds = array_map(fn($card) => $card->getId(), $cards);
-
-                $neverSeenCards = $cardRepository->findNeverSeenCardsInDeck($user, $deck, $remainingLimit, $seenCardIds);
+                $neverSeenCards = $cardRepository->findNeverSeenCardsInDeck($user, $deck, $newCount, $seenCardIds);
                 $cards = array_merge($cards, $neverSeenCards);
             }
 
@@ -125,9 +131,16 @@ class ReviewSessionController extends AbstractController
         $entityManager->persist($reviewSession);
         $entityManager->flush();
 
+        // Normalize card objects with appropriate serialization groups
+        $context = new ObjectNormalizerContextBuilder()
+            ->withGroups(['card:read', 'card:item', 'uuid'])
+            ->toArray();
+
+        $normalizedCards = $serializer->normalize($cards, null, $context);
+
         $response = [
             'id' => $reviewSession->getId(),
-            'cards' => array_map(fn($card) => $card->getId(), $cards),
+            'cards' => $normalizedCards,
             'origin' => $origin
         ];
 

@@ -4,6 +4,9 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use App\Controller\DeckStatsController;
 use App\Entity\Traits\DateAtTrait;
 use App\Entity\Traits\UuidTrait;
 use App\Enum\CardReviewStatus;
@@ -17,7 +20,12 @@ use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: CardRepository::class)]
 #[ORM\Index(name: 'card_idx_deck_position', columns: ['deck_id', 'position'])]
-#[ApiResource]
+#[ApiResource(
+    operations: [
+        new Get(normalizationContext: ['groups' => ['card:read', 'card:item', 'uuid']]),
+        new GetCollection(normalizationContext: ['groups' => ['card:read', 'uuid']]),
+    ]
+)]
 class Card
 {
     use UuidTrait;
@@ -25,10 +33,11 @@ class Card
 
     #[ORM\ManyToOne(inversedBy: 'cards')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['card:read', 'card:item'])]
     private ?Deck $deck = null;
 
     #[ORM\Column(type: Types::SMALLINT)]
-    #[Groups(['deck:item'])]
+    #[Groups(['card:read', 'card:item', 'deck:item'])]
     private ?int $position = 0;
 
     /**
@@ -36,7 +45,7 @@ class Card
      */
     #[ORM\OneToMany(targetEntity: CardSide::class, mappedBy: 'card', cascade: ['persist'], orphanRemoval: true)]
     #[ApiProperty(writableLink: true)]
-    #[Groups(['deck:item'])]
+    #[Groups(['card:read', 'card:item', 'deck:item'])]
     private Collection $cardSides;
 
     /**
