@@ -11,6 +11,7 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
+use App\Controller\DeckStatsController;
 use App\Entity\Traits\DateAtTrait;
 use App\Entity\Traits\UuidTrait;
 use App\Enum\CountryCodeAlpha2;
@@ -29,6 +30,13 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ApiResource(
     operations: [
         new Get(normalizationContext: ['groups' => ['deck:read', 'deck:item', 'uuid']]),
+        new Get(
+            uriTemplate: '/decks/{id}/stats',
+            controller: DeckStatsController::class,
+            normalizationContext: ['groups' => ['deck:read', 'deck:item', 'uuid']],
+            security: "is_fully_authenticated()",
+            securityMessage: "Only authenticated users can access deck stats"
+        ),
         new GetCollection(
             paginationClientEnabled: true,
             paginationClientItemsPerPage: true,

@@ -4,9 +4,14 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use App\Controller\DeckStatsController;
 use App\Entity\Traits\DateAtTrait;
 use App\Entity\Traits\UuidTrait;
+use App\Enum\CardReviewStatus;
 use App\Repository\CardRepository;
+use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -15,7 +20,12 @@ use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: CardRepository::class)]
 #[ORM\Index(name: 'card_idx_deck_position', columns: ['deck_id', 'position'])]
-#[ApiResource]
+#[ApiResource(
+    operations: [
+        new Get(normalizationContext: ['groups' => ['card:read', 'card:item', 'uuid']]),
+        new GetCollection(normalizationContext: ['groups' => ['card:read', 'uuid']]),
+    ]
+)]
 class Card
 {
     use UuidTrait;
@@ -23,10 +33,11 @@ class Card
 
     #[ORM\ManyToOne(inversedBy: 'cards')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['card:read', 'card:item'])]
     private ?Deck $deck = null;
 
     #[ORM\Column(type: Types::SMALLINT)]
-    #[Groups(['deck:item'])]
+    #[Groups(['card:read', 'card:item', 'deck:item'])]
     private ?int $position = 0;
 
     /**
@@ -34,7 +45,7 @@ class Card
      */
     #[ORM\OneToMany(targetEntity: CardSide::class, mappedBy: 'card', cascade: ['persist'], orphanRemoval: true)]
     #[ApiProperty(writableLink: true)]
-    #[Groups(['deck:item'])]
+    #[Groups(['card:read', 'card:item', 'deck:item'])]
     private Collection $cardSides;
 
     /**
@@ -43,10 +54,17 @@ class Card
     #[ORM\OneToMany(targetEntity: ReviewEvent::class, mappedBy: 'card', orphanRemoval: true)]
     private Collection $reviewEvents;
 
+    /**
+     * @var Collection<int, ReviewProgress>
+     */
+    #[ORM\OneToMany(targetEntity: ReviewProgress::class, mappedBy: 'card', orphanRemoval: true)]
+    private Collection $reviewProgress;
+
     public function __construct()
     {
         $this->cardSides = new ArrayCollection();
         $this->reviewEvents = new ArrayCollection();
+        $this->reviewProgress = new ArrayCollection();
     }
 
     public function getDeck(): ?Deck
@@ -131,5 +149,64 @@ class Card
         }
 
         return $this;
+    }
+
+    /**
+     * @return Collection<int, ReviewProgress>
+     */
+    public function getReviewProgress(): Collection
+    {
+        return $this->reviewProgress;
+    }
+
+    public function addReviewProgress(ReviewProgress $reviewProgress): static
+    {
+        if (!$this->reviewProgress->contains($reviewProgress)) {
+            $this->reviewProgress->add($reviewProgress);
+            $reviewProgress->setCard($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReviewProgress(ReviewProgress $reviewProgress): static
+    {
+        if ($this->reviewProgress->removeElement($reviewProgress)) {
+            // set the owning side to null (unless already changed)
+            if ($reviewProgress->getCard() === $this) {
+                $reviewProgress->setCard(null);
+            }
+        }
+
+        return $this;
+    }
+
+    #[Groups(['card:stats'])]
+    public function getReviewStatus(): string
+    {
+        if ($this->reviewProgress->isEmpty()) {
+            return CardReviewStatus::NEVER_SEEN->value;
+        }
+
+        $soonestDueAt = null;
+        foreach ($this->reviewProgress as $progress) {
+            $dueAt = $progress->getDueAt();
+            if ($dueAt === null) {
+                continue;
+            }
+            if ($soonestDueAt === null || $dueAt < $soonestDueAt) {
+                $soonestDueAt = $dueAt;
+            }
+        }
+
+        if ($soonestDueAt === null) {
+            return CardReviewStatus::NEVER_SEEN->value;
+        }
+
+        $now = new DateTimeImmutable();
+        if ($soonestDueAt <= $now) {
+            return CardReviewStatus::DUE->value;
+        }
+        return CardReviewStatus::NOT_DUE_YET->value;
     }
 }

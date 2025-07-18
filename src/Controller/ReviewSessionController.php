@@ -5,11 +5,14 @@ namespace App\Controller;
 use App\Entity\ReviewSession;
 use App\Entity\User;
 use App\Enum\ReviewMode;
+use App\Enum\ReviewSessionOrigin;
 use App\Enum\ScoreEventType;
 use App\Repository\CardRepository;
 use App\Repository\DeckRepository;
+use App\Repository\ReviewProgressRepository;
 use App\Repository\ReviewSessionRepository;
 use App\Service\ScoreLogger;
+use DateTime;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -27,12 +30,14 @@ class ReviewSessionController extends AbstractController
 {
     #[Route('/api/review_sessions/start', name: 'api_review_sessions_start', methods: ['POST'])]
     public function start(
-        #[CurrentUser] ?User   $user,
-        Request                $request,
-        EntityManagerInterface $entityManager,
-        DeckRepository         $deckRepository,
-        CardRepository         $cardRepository,
-        ValidatorInterface     $validator
+        #[CurrentUser] ?User     $user,
+        Request                  $request,
+        EntityManagerInterface   $entityManager,
+        DeckRepository           $deckRepository,
+        CardRepository           $cardRepository,
+        ReviewProgressRepository $reviewProgressRepository,
+        ValidatorInterface       $validator,
+        SerializerInterface      $serializer
     ): Response
     {
         if ($request->getContent() === '') {
@@ -50,13 +55,26 @@ class ReviewSessionController extends AbstractController
             'deck' => [new Assert\NotBlank(), new Assert\Uuid()],
             'mode' => [new Assert\NotBlank(), new Assert\Choice(choices: ['flashcard', 'qcm'])],
             'cards' => [
-                new Assert\NotBlank(),
-                new Assert\Type('array'),
-                new Assert\Count(['min' => 1]),
-                new Assert\All([
-                    new Assert\Uuid()
+                new Assert\Optional([
+                    new Assert\Type('array'),
+                    new Assert\Count(['min' => 1]),
+                    new Assert\All([
+                        new Assert\Uuid()
+                    ])
                 ])
             ],
+            'dueLimit' => [
+                new Assert\Optional([
+                    new Assert\Type('integer'),
+                    new Assert\Range(['min' => 0, 'max' => 50])
+                ])
+            ],
+            'newCount' => [
+                new Assert\Optional([
+                    new Assert\Type('integer'),
+                    new Assert\Range(['min' => 0, 'max' => 50])
+                ])
+            ]
         ]);
 
         $violations = $validator->validate($data, $constraints);
@@ -68,15 +86,42 @@ class ReviewSessionController extends AbstractController
             throw $this->createNotFoundException('Deck not found');
         }
 
-        // Get cards by provided IDs, ensuring they belong to the specified deck
-        $cards = $cardRepository->findBy([
-            'id' => $data['cards'],
-            'deck' => $deck
-        ]);
+        if (!empty($data['cards'])) {
+            // Manual mode: use provided cards
+            $origin = ReviewSessionOrigin::MANUAL;
+            $cards = $cardRepository->findBy([
+                'id' => $data['cards'],
+                'deck' => $deck
+            ]);
 
-        // Check if all requested cards were found
-        if (count($cards) !== count($data['cards'])) {
-            throw new BadRequestHttpException('Some requested cards were not found or do not belong to the specified deck');
+            // Check if all requested cards were found
+            if (count($cards) !== count($data['cards'])) {
+                throw new BadRequestHttpException('Some requested cards were not found or do not belong to the specified deck');
+            }
+        } else {
+            // Queue mode: auto-select cards
+            $origin = ReviewSessionOrigin::QUEUE;
+            $dueLimit = $data['dueLimit'] ?? 20;
+            $newCount = $data['newCount'] ?? 0;
+            $now = new DateTime();
+
+            // If newCount is specified, get that many never-seen cards first
+            $neverSeenCards = [];
+            if ($newCount > 0) {
+                $neverSeenCards = $cardRepository->findNeverSeenCardsInDeck($user, $deck, $newCount, []);
+            }
+
+            // Get due cards (up to dueLimit), excluding the new cards already selected
+            $excludeIds = array_map(fn($card) => $card->getId(), $neverSeenCards);
+            $dueProgressRecords = $reviewProgressRepository->findDueForUserInDeck($user, $deck, $now, $dueLimit, $excludeIds);
+            $dueCards = array_map(fn($progress) => $progress->getCard(), $dueProgressRecords);
+
+            // New cards first, then due cards
+            $cards = array_merge($neverSeenCards, $dueCards);
+
+            if (empty($cards)) {
+                return $this->json(['message' => 'No cards available for review in this deck'], Response::HTTP_OK);
+            }
         }
 
         // Create a review session
@@ -84,12 +129,22 @@ class ReviewSessionController extends AbstractController
         $reviewSession->setReviewer($user);
         $reviewSession->setDeck($deck);
         $reviewSession->setMode(ReviewMode::from($data['mode']));
+        $reviewSession->setOrigin($origin);
 
         $entityManager->persist($reviewSession);
         $entityManager->flush();
 
+        // Normalize card objects with appropriate serialization groups
+        $context = new ObjectNormalizerContextBuilder()
+            ->withGroups(['card:read', 'card:item', 'uuid'])
+            ->toArray();
+
+        $normalizedCards = $serializer->normalize($cards, null, $context);
+
         $response = [
-            'id' => $reviewSession->getId()
+            'id' => $reviewSession->getId(),
+            'cards' => $normalizedCards,
+            'origin' => $origin
         ];
 
         return $this->json($response, Response::HTTP_CREATED);

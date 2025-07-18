@@ -22,12 +22,12 @@ class CardSide
     private ?Card $card = null;
 
     #[ORM\Column(enumType: self::class)]
-    #[Groups(['deck:item'])]
+    #[Groups(['card:item', 'deck:item'])]
     private ?CardSides $side = CardSides::FRONT;
 
     #[ORM\OneToOne(mappedBy: 'card_side', cascade: ['persist', 'remove'])]
     #[ApiProperty(writableLink: true)]
-    #[Groups(['deck:item'])]
+    #[Groups(['card:item', 'deck:item'])]
     private ?CardBlock $cardBlock = null;
 
     public function getCard(): ?Card

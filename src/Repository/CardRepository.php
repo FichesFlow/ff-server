@@ -3,6 +3,8 @@
 namespace App\Repository;
 
 use App\Entity\Card;
+use App\Entity\Deck;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -16,28 +18,34 @@ class CardRepository extends ServiceEntityRepository
         parent::__construct($registry, Card::class);
     }
 
-    //    /**
-    //     * @return Card[] Returns an array of Card objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('c')
-    //            ->andWhere('c.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('c.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+    public function findNeverSeenCardsInDeck(User $user, Deck $deck, int $limit, array $excludeIds = []): array
+    {
+        $qb = $this->createQueryBuilder('c')
+            ->leftJoin('App\Entity\ReviewProgress', 'rp', 'WITH', 'rp.card = c AND rp.reviewer = :user')
+            ->andWhere('c.deck = :deck')
+            ->andWhere('rp.id IS NULL')
+            ->setParameter('user', $user)
+            ->setParameter('deck', $deck)
+            ->setMaxResults($limit);
 
-    //    public function findOneBySomeField($value): ?Card
-    //    {
-    //        return $this->createQueryBuilder('c')
-    //            ->andWhere('c.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+        if (!empty($excludeIds)) {
+            $qb->andWhere('c.id NOT IN (:excludeIds)')
+               ->setParameter('excludeIds', $excludeIds);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    public function countUnseenCardsInDeck(Deck $deck, User $user): int
+    {
+        return $this->createQueryBuilder('c')
+            ->select('COUNT(c.id)')
+            ->leftJoin('App\Entity\ReviewProgress', 'rp', 'WITH', 'rp.card = c AND rp.reviewer = :user')
+            ->where('c.deck = :deck')
+            ->andWhere('rp.id IS NULL')
+            ->setParameter('deck', $deck)
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 }
