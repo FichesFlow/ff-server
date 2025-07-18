@@ -35,4 +35,17 @@ class CardRepository extends ServiceEntityRepository
 
         return $qb->getQuery()->getResult();
     }
+
+    public function countUnseenCardsInDeck(Deck $deck, User $user): int
+    {
+        return $this->createQueryBuilder('c')
+            ->select('COUNT(c.id)')
+            ->leftJoin('App\Entity\ReviewProgress', 'rp', 'WITH', 'rp.card = c AND rp.reviewer = :user')
+            ->where('c.deck = :deck')
+            ->andWhere('rp.id IS NULL')
+            ->setParameter('deck', $deck)
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 }

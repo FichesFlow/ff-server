@@ -79,10 +79,9 @@ class ReviewSessionController extends AbstractController
             throw $this->createNotFoundException('Deck not found');
         }
 
-        $origin = 'manual';
-
         if (!empty($data['cards'])) {
             // Manual mode: use provided cards
+            $origin = ReviewSessionOrigin::MANUAL;
             $cards = $cardRepository->findBy([
                 'id' => $data['cards'],
                 'deck' => $deck

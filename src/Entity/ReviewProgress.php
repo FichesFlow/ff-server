@@ -12,6 +12,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: ReviewProgressRepository::class)]
 #[ORM\UniqueConstraint(name: 'unique_reviewer_card', columns: ['reviewer_id', 'card_id'])]
 #[ORM\Index(name: 'idx_reviewer_due_at', columns: ['reviewer_id', 'due_at'])]
+#[ORM\Index(name: 'idx_card_due_at', columns: ['card_id', 'due_at'])]
 #[ApiResource]
 class ReviewProgress
 {

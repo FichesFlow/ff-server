@@ -6,7 +6,9 @@ use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use App\Entity\Traits\DateAtTrait;
 use App\Entity\Traits\UuidTrait;
+use App\Enum\CardReviewStatus;
 use App\Repository\CardRepository;
+use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -168,5 +170,34 @@ class Card
         }
 
         return $this;
+    }
+
+    #[Groups(['card:stats'])]
+    public function getReviewStatus(): string
+    {
+        if ($this->reviewProgress->isEmpty()) {
+            return CardReviewStatus::NEVER_SEEN->value;
+        }
+
+        $soonestDueAt = null;
+        foreach ($this->reviewProgress as $progress) {
+            $dueAt = $progress->getDueAt();
+            if ($dueAt === null) {
+                continue;
+            }
+            if ($soonestDueAt === null || $dueAt < $soonestDueAt) {
+                $soonestDueAt = $dueAt;
+            }
+        }
+
+        if ($soonestDueAt === null) {
+            return CardReviewStatus::NEVER_SEEN->value;
+        }
+
+        $now = new DateTimeImmutable();
+        if ($soonestDueAt <= $now) {
+            return CardReviewStatus::DUE->value;
+        }
+        return CardReviewStatus::NOT_DUE_YET->value;
     }
 }
