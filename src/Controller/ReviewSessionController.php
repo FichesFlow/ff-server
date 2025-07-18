@@ -105,16 +105,19 @@ class ReviewSessionController extends AbstractController
             $newCount = $data['newCount'] ?? 0;
             $now = new DateTime();
 
-            // Get due cards first (up to dueLimit)
-            $dueProgressRecords = $reviewProgressRepository->findDueForUserInDeck($user, $deck, $now, $dueLimit);
-            $cards = array_map(fn($progress) => $progress->getCard(), $dueProgressRecords);
-
-            // If newCount is specified, get that many never-seen cards
+            // If newCount is specified, get that many never-seen cards first
+            $neverSeenCards = [];
             if ($newCount > 0) {
-                $seenCardIds = array_map(fn($card) => $card->getId(), $cards);
-                $neverSeenCards = $cardRepository->findNeverSeenCardsInDeck($user, $deck, $newCount, $seenCardIds);
-                $cards = array_merge($cards, $neverSeenCards);
+                $neverSeenCards = $cardRepository->findNeverSeenCardsInDeck($user, $deck, $newCount, []);
             }
+
+            // Get due cards (up to dueLimit), excluding the new cards already selected
+            $excludeIds = array_map(fn($card) => $card->getId(), $neverSeenCards);
+            $dueProgressRecords = $reviewProgressRepository->findDueForUserInDeck($user, $deck, $now, $dueLimit, $excludeIds);
+            $dueCards = array_map(fn($progress) => $progress->getCard(), $dueProgressRecords);
+
+            // New cards first, then due cards
+            $cards = array_merge($neverSeenCards, $dueCards);
 
             if (empty($cards)) {
                 return $this->json(['message' => 'No cards available for review in this deck'], Response::HTTP_OK);
