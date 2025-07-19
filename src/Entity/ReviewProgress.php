@@ -44,6 +44,9 @@ class ReviewProgress
     #[ORM\Column(options: ['default' => 0])]
     private ?int $total_reviews = 0;
 
+    #[ORM\Column(type: Types::SMALLINT, options: ['default' => 0])]
+    private ?int $repetitions = 0;
+
     public function getReviewer(): ?User
     {
         return $this->reviewer;
@@ -136,6 +139,18 @@ class ReviewProgress
     public function setTotalReviews(int $total_reviews): static
     {
         $this->total_reviews = $total_reviews;
+
+        return $this;
+    }
+
+    public function getRepetitions(): ?int
+    {
+        return $this->repetitions;
+    }
+
+    public function setRepetitions(int $repetitions): static
+    {
+        $this->repetitions = $repetitions;
 
         return $this;
     }
