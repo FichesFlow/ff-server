@@ -6,6 +6,7 @@ use App\Entity\Card;
 use App\Entity\Deck;
 use App\Entity\ReviewProgress;
 use App\Entity\User;
+use DateTime;
 use DateTimeInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -37,7 +38,7 @@ class ReviewProgressRepository extends ServiceEntityRepository
         }
     }
 
-    public function findDueForUser(User $user, DateTimeInterface $beforeDate = null, int $limit = null): array
+    public function findDueForUser(User $user, ?DateTimeInterface $beforeDate = null, ?int $limit = null): array
     {
         $qb = $this->createQueryBuilder('rp')
             ->andWhere('rp.reviewer = :user')
@@ -69,10 +70,10 @@ class ReviewProgressRepository extends ServiceEntityRepository
                 ->setParameter('beforeDate', $beforeDate);
         }
 
-        return (int) $qb->getQuery()->getSingleScalarResult();
+        return (int)$qb->getQuery()->getSingleScalarResult();
     }
 
-    public function findDueForUserInDeck(User $user, Deck $deck, DateTimeInterface $beforeDate = null, int $limit = null): array
+    public function findDueForUserInDeck(User $user, Deck $deck, ?DateTimeInterface $beforeDate = null, ?int $limit = null): array
     {
         $qb = $this->createQueryBuilder('rp')
             ->join('rp.card', 'c')
@@ -83,7 +84,7 @@ class ReviewProgressRepository extends ServiceEntityRepository
 
         if ($beforeDate) {
             $qb->andWhere('rp.due_at <= :beforeDate')
-               ->setParameter('beforeDate', $beforeDate);
+                ->setParameter('beforeDate', $beforeDate);
         }
 
         $qb->orderBy('rp.due_at', 'ASC');
@@ -95,7 +96,7 @@ class ReviewProgressRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
-    public function countDueForUserInDeck(User $user, Deck $deck, DateTimeInterface $beforeDate = null): int
+    public function countDueForUserInDeck(User $user, Deck $deck, ?DateTimeInterface $beforeDate = null): int
     {
         $qb = $this->createQueryBuilder('rp')
             ->select('COUNT(rp.id)')
@@ -110,10 +111,10 @@ class ReviewProgressRepository extends ServiceEntityRepository
                 ->setParameter('beforeDate', $beforeDate);
         }
 
-        return (int) $qb->getQuery()->getSingleScalarResult();
+        return (int)$qb->getQuery()->getSingleScalarResult();
     }
 
-    public function countDueForUserGroupedByDeck(User $user, DateTimeInterface $beforeDate = null): array
+    public function countDueForUserGroupedByDeck(User $user, ?DateTimeInterface $beforeDate = null): array
     {
         $qb = $this->createQueryBuilder('rp')
             ->select('d.id as deck_id, d.title as deck_name, COUNT(rp.id) as count')
@@ -135,7 +136,7 @@ class ReviewProgressRepository extends ServiceEntityRepository
         return array_map(fn($result) => [
             'deck_id' => $result['deck_id'],
             'deck_name' => $result['deck_name'],
-            'count' => (int) $result['count']
+            'count' => (int)$result['count']
         ], $results);
     }
 
@@ -149,7 +150,7 @@ class ReviewProgressRepository extends ServiceEntityRepository
             ->andWhere('rp.due_at <= :now')
             ->setParameter('user', $user)
             ->setParameter('deck', $deck)
-            ->setParameter('now', new \DateTime())
+            ->setParameter('now', new DateTime())
             ->getQuery()
             ->getSingleScalarResult();
     }

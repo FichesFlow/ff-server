@@ -31,35 +31,20 @@ class ReviewController extends AbstractController
             return $this->json(['error' => 'User not found'], 401);
         }
 
-        $limit = (int)$request->query->get('limit', 20);
-        $limit = max(1, min(100, $limit)); // Clamp between 1 and 100
-
         $now = new DateTime();
-        $dueProgressRecords = $this->reviewProgressRepository->findDueForUser($user, $now, $limit);
+        $deckCounts = $this->reviewProgressRepository->countDueForUserGroupedByDeck($user, $now);
 
-        $cardIds = array_map(fn($progress) => $progress->getCard()->getId(), $dueProgressRecords);
-        $totalCount = $this->reviewProgressRepository->countDueForUser($user, $now);
+        $total = array_sum(array_column($deckCounts, 'count'));
+
+        $decks = array_map(fn($deckData) => [
+            'id' => $deckData['deck_id'],
+            'title' => $deckData['deck_name'],
+            'due' => $deckData['count']
+        ], $deckCounts);
 
         return $this->json([
-            'cards' => $cardIds,
-            'count' => $totalCount
-        ]);
-    }
-
-    #[Route('/due/count', name: 'api_review_due_count', methods: ['GET'])]
-    #[IsGranted('ROLE_USER')]
-    public function getDueCardsCount(): JsonResponse
-    {
-        $user = $this->getUser();
-        if (!$user instanceof User) {
-            return $this->json(['error' => 'User not found'], 401);
-        }
-
-        $now = new DateTime();
-        $count = $this->reviewProgressRepository->countDueForUser($user, $now);
-
-        return $this->json([
-            'count' => $count
+            'total' => $total,
+            'decks' => $decks
         ]);
     }
 
