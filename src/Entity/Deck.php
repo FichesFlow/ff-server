@@ -17,6 +17,7 @@ use App\Entity\Traits\UuidTrait;
 use App\Enum\CountryCodeAlpha2;
 use App\Enum\DeckStatus;
 use App\Enum\DeckVisibility;
+use App\Filter\MineDecksFilter;
 use App\Repository\DeckRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -27,6 +28,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ORM\Entity(repositoryClass: DeckRepository::class)]
 #[ORM\Index(name: 'deck_idx_visibility_status', columns: ['visibility', 'status'])]
 #[ORM\Index(name: 'deck_idx_rating_avg_count', columns: ['rating_avg', 'rating_count'])]
+#[ApiFilter(MineDecksFilter::class, arguments: ['parameterName' => 'mine'])]
 #[ApiResource(
     operations: [
         new Get(normalizationContext: ['groups' => ['deck:read', 'deck:item', 'uuid']]),
