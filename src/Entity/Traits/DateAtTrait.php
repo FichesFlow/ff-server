@@ -16,6 +16,7 @@ trait DateAtTrait
 
     #[ORM\Column(type: Types::DATETIMETZ_MUTABLE)]
     #[Gedmo\Timestampable(on: 'update')]
+    #[Groups(['deck:list'])]
     private ?DateTime $updated_at = null;
 
     public function __construct()
