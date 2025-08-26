@@ -6,13 +6,15 @@ use ApiPlatform\Doctrine\Orm\Filter\AbstractFilter;
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
 use Doctrine\ORM\QueryBuilder;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 final class MineDecksFilter extends AbstractFilter
 {
     public function __construct(
         private Security $security,
-        RequestStack $requestStack
+        RequestStack $requestStack,
+        protected ?array $properties = null
     )
     {
         parent::__construct($requestStack);
@@ -22,8 +24,11 @@ final class MineDecksFilter extends AbstractFilter
     public function filterProperty(
         string                      $property, 
                                     $value, 
-        QueryBuilder                $queryBuilder,
-        string                      $resourceClass
+        QueryBuilder                $queryBuilder, 
+        QueryNameGeneratorInterface $queryNameGenerator, 
+        string                      $resourceClass, 
+        Operation                   $operation = null, 
+        array                       $context = []
         ): void
     {
         // Otherwise filter is applied to order and page as well

@@ -28,7 +28,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ORM\Entity(repositoryClass: DeckRepository::class)]
 #[ORM\Index(name: 'deck_idx_visibility_status', columns: ['visibility', 'status'])]
 #[ORM\Index(name: 'deck_idx_rating_avg_count', columns: ['rating_avg', 'rating_count'])]
-#[ApiFilter(MineDecksFilter::class, arguments: ['parameterName' => 'mine'])]
+#[ApiFilter(MineDecksFilter::class, properties: ['mine'])]
 #[ApiResource(
     operations: [
         new Get(normalizationContext: ['groups' => ['deck:read', 'deck:item', 'uuid']]),
