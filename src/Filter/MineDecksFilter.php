@@ -6,18 +6,19 @@ use ApiPlatform\Doctrine\Orm\Filter\AbstractFilter;
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
 use Doctrine\ORM\QueryBuilder;
+use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\SecurityBundle\Security;
-use Symfony\Component\HttpFoundation\RequestStack;
 
 final class MineDecksFilter extends AbstractFilter
 {
+    
     public function __construct(
         private Security $security,
-        RequestStack $requestStack,
+        ManagerRegistry  $doctrine,
         protected ?array $properties = null
     )
     {
-        parent::__construct($requestStack);
+        parent::__construct($doctrine);
     }
 
     // A filter to get only the decks owned by the current user.
@@ -29,7 +30,7 @@ final class MineDecksFilter extends AbstractFilter
         string                      $resourceClass, 
         Operation                   $operation = null, 
         array                       $context = []
-        ): void
+    ): void
     {
         // Otherwise filter is applied to order and page as well
         if (
