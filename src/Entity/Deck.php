@@ -17,6 +17,7 @@ use App\Entity\Traits\UuidTrait;
 use App\Enum\CountryCodeAlpha2;
 use App\Enum\DeckStatus;
 use App\Enum\DeckVisibility;
+use App\Filter\MineDecksFilter;
 use App\Repository\DeckRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -27,9 +28,10 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ORM\Entity(repositoryClass: DeckRepository::class)]
 #[ORM\Index(name: 'deck_idx_visibility_status', columns: ['visibility', 'status'])]
 #[ORM\Index(name: 'deck_idx_rating_avg_count', columns: ['rating_avg', 'rating_count'])]
+#[ApiFilter(MineDecksFilter::class, properties: ['mine'])]
 #[ApiResource(
     operations: [
-        new Get(normalizationContext: ['groups' => ['deck:read', 'deck:item', 'uuid']]),
+        new Get(normalizationContext: ['groups' => ['deck:read', 'deck:item', 'deck:list', 'uuid']]),
         new Get(
             uriTemplate: '/decks/{id}/stats',
             controller: DeckStatsController::class,
@@ -65,11 +67,11 @@ class Deck
     private ?User $owner = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['deck:read', 'deck:item', 'queue:item', 'deck:update'])]
+    #[Groups(['deck:read', 'deck:item', 'deck:list', 'queue:item', 'deck:update'])]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Groups(['deck:read', 'deck:item', 'queue:item', 'deck:update'])]
+    #[Groups(['deck:read', 'deck:item', 'deck:list', 'queue:item', 'deck:update'])]
     private ?string $description = null;
 
     #[ORM\Column(nullable: true, enumType: CountryCodeAlpha2::class)]
@@ -78,7 +80,7 @@ class Deck
 
     #[ORM\Column(enumType: DeckVisibility::class)]
     #[ApiFilter(SearchFilter::class, strategy: 'exact')]
-    #[Groups(['deck:read', 'deck:item', 'deck:update'])]
+    #[Groups(['deck:read', 'deck:item', 'deck:list', 'deck:update'])]
     private ?DeckVisibility $visibility = DeckVisibility::UNLISTED;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 3, scale: 2)]
@@ -90,12 +92,12 @@ class Deck
     private int $rating_count = 0;
 
     #[ORM\Column]
-    #[Groups(['deck:read', 'deck:item', 'queue:item'])]
+    #[Groups(['deck:read', 'deck:item', 'deck:list', 'queue:item'])]
     private int $card_count = 0;
 
     #[ORM\Column(enumType: DeckStatus::class)]
     #[ApiFilter(SearchFilter::class, strategy: 'exact')]
-    #[Groups(['deck:read', 'deck:item', 'deck:update'])]
+    #[Groups(['deck:read', 'deck:item', 'deck:list', 'deck:update'])]
     private ?DeckStatus $status = DeckStatus::DRAFT;
 
     /**

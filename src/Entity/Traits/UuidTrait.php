@@ -14,7 +14,7 @@ trait UuidTrait
     #[ORM\Column(type: UuidType::NAME, unique: true)]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(class: UuidGenerator::class)]
-    #[Groups(['uuid'])]
+    #[Groups(['uuid', 'deck:list'])]
     private ?Uuid $id = null;
 
     public function getId(): ?Uuid
