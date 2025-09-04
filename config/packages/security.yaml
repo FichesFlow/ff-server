@@ -26,6 +26,8 @@ security:
             refresh_jwt:
                 check_path: /api/token/refresh
                 provider: app_user_provider
+            logout:
+                path: api_token_invalidate
         main:
             stateless: true
             lazy: true
