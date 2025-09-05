@@ -21,7 +21,7 @@ class CardBlock
     private ?CardSide $card_side = null;
 
     #[ORM\Column(type: Types::TEXT)]
-    #[Groups(['card:item', 'deck:item'])]
+    #[Groups(['card:item', 'card:write', 'card:read', 'deck:item'])]
     private ?string $content;
 
     public function getCardSide(): ?CardSide
