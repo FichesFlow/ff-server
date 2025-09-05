@@ -1,18 +1,20 @@
 <?php
 
+namespace App\Service;
+
 use League\CommonMark\CommonMarkConverter;
 use Symfony\Component\HtmlSanitizer\HtmlSanitizerInterface;
 
 final class MarkdownSanitizer
 {
     public function __construct(
-        private CommonMarkConverter $md,
         private HtmlSanitizerInterface $san
     ) {}
 
     public function toSafeHtml(string $markdown): string
     {
-        $html = $this->md->convert($markdown)->getContent();
+        $md = new CommonMarkConverter();
+        $html = $md->convert($markdown)->getContent();
 
         return $this->san->sanitize($html, [
             'allow_safe_elements' => true,
