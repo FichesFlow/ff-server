@@ -13,18 +13,21 @@ security:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
-        login:
-            pattern: ^/api/login
-            stateless: true
-            json_login:
-                check_path: /api/login_check
-                username_path: email
-                success_handler: lexik_jwt_authentication.handler.authentication_success
-                failure_handler: lexik_jwt_authentication.handler.authentication_failure
         api:
             pattern: ^/api
             stateless: true
+            entry_point: jwt
+            json_login:
+                check_path: /api/login
+                username_path: email
+                success_handler: lexik_jwt_authentication.handler.authentication_success
+                failure_handler: lexik_jwt_authentication.handler.authentication_failure
             jwt: ~
+            refresh_jwt:
+                check_path: /api/token/refresh
+                provider: app_user_provider
+            logout:
+                path: api_token_invalidate
         main:
             stateless: true
             lazy: true
@@ -46,6 +49,7 @@ security:
         - { path: ^/api/ping, roles: PUBLIC_ACCESS }
         - { path: ^/api, roles: PUBLIC_ACCESS }
         - { path: ^/api/decks?mine=1, roles: ROLE_USER }
+        - { path: ^/api/token/refresh, roles: PUBLIC_ACCESS }
         # - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/profile, roles: ROLE_USER }
 
