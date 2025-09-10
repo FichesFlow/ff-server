@@ -2,6 +2,7 @@
 
 namespace App\DataFixtures;
 
+use App\DataFixtures\CardFixtures;
 use App\DataFixtures\DeckFixtures;
 use App\DataFixtures\TagFixtures;
 use App\DataFixtures\UserFixtures;
@@ -26,6 +27,7 @@ class AppFixtures extends Fixture implements DependentFixtureInterface
             UserFixtures::class,
             TagFixtures::class,
             DeckFixtures::class,
+            CardFixtures::class,
         ];
     }
 }
