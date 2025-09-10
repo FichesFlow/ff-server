@@ -2,6 +2,7 @@
 
 namespace App\DataFixtures;
 
+use App\DataFixtures\DeckFixtures;
 use App\DataFixtures\TagFixtures;
 use App\DataFixtures\UserFixtures;
 use Doctrine\Bundle\FixturesBundle\Fixture;
@@ -24,6 +25,7 @@ class AppFixtures extends Fixture implements DependentFixtureInterface
         return [
             UserFixtures::class,
             TagFixtures::class,
+            DeckFixtures::class,
         ];
     }
 }
