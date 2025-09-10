@@ -39,7 +39,6 @@ class Tag
 
     public function __construct()
     {
-        $this->parent_tag = new ArrayCollection();
         $this->decks = new ArrayCollection();
     }
 
@@ -75,28 +74,6 @@ class Tag
     public function setDescription(?string $description): static
     {
         $this->description = $description;
-
-        return $this;
-    }
-
-    public function addParentTag(self $parentTag): static
-    {
-        if (!$this->parent_tag->contains($parentTag)) {
-            $this->parent_tag->add($parentTag);
-            $parentTag->setParentTag($this);
-        }
-
-        return $this;
-    }
-
-    public function removeParentTag(self $parentTag): static
-    {
-        if ($this->parent_tag->removeElement($parentTag)) {
-            // set the owning side to null (unless already changed)
-            if ($parentTag->getParentTag() === $this) {
-                $parentTag->setParentTag(null);
-            }
-        }
 
         return $this;
     }
