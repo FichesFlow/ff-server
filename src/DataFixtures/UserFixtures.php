@@ -25,7 +25,7 @@ class UserFixtures extends Fixture
         for ($i = 0; $i < 10; $i++) {
             $user = new User();
             $user->setEmail($this->faker->email());
-            $password = $this->passwordHasher->hashPassword($user, $this->faker->password());
+            $password = $this->passwordHasher->hashPassword($user, 'password');
             $user->setPassword($password);
             $user->setUserName($this->faker->userName());
             $user->setRoles(['ROLE_USER']);
