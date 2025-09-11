@@ -4,6 +4,7 @@ namespace App\DataFixtures;
 
 use App\DataFixtures\CardFixtures;
 use App\DataFixtures\DeckFixtures;
+use App\DataFixtures\RatingFixtures;
 use App\DataFixtures\TagFixtures;
 use App\DataFixtures\UserFixtures;
 use Doctrine\Bundle\FixturesBundle\Fixture;
@@ -28,6 +29,7 @@ class AppFixtures extends Fixture implements DependentFixtureInterface
             TagFixtures::class,
             DeckFixtures::class,
             CardFixtures::class,
+            RatingFixtures::class,
         ];
     }
 }
