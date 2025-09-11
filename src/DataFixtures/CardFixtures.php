@@ -30,6 +30,7 @@ class CardFixtures extends Fixture
         $cardCount = 0;
         $cardSideCount = 0;
         $cardBlockCount = 0;
+        $sides = [CardSides::FRONT, CardSides::BACK];
 
         foreach ($decks as $deck) {
             for ($i = 0; $i < 20; $i++) {
@@ -38,40 +39,25 @@ class CardFixtures extends Fixture
                 $deck->setCardCount($deck->getCardCount() + 1);
                 $card->setPosition($i);
 
-                $cardSideFront = new CardSide();
-                $cardSideFront->setCard($card);
-                $cardSideFront->setSide(CardSides::FRONT);
+                foreach ($sides as $side) {
+                    $cardSide = new CardSide();
+                    $cardSide->setCard($card);
+                    $cardSide->setSide($side);
 
-                $this->addReference(self::CARD_SIDE_REFERENCE . '_' . $cardSideCount, $cardSideFront);
-                $cardSideCount++;
+                    $manager->persist($cardSide);
+                    $this->addReference(self::CARD_SIDE_REFERENCE . '_' . $cardSideCount, $cardSide);
+                    $cardSideCount++;
 
-                $cardBlockFront = new CardBlock();
-                $cardBlockFront->setCardSide($cardSideFront);
-                $cardBlockFront->setContent($this->faker->sentence(10));
+                    $cardBlock = new CardBlock();
+                    $cardBlock->setCardSide($cardSide);
+                    $cardBlock->setContent($this->faker->sentence(10));
 
-                $this->addReference(self::CARD_BLOCK_REFERENCE . '_' . $cardBlockCount, $cardBlockFront);
-                $cardBlockCount++;
-
-                $cardSideBack = new CardSide();
-                $cardSideBack->setCard($card);
-                $cardSideBack->setSide(CardSides::BACK);
-
-                $this->addReference(self::CARD_SIDE_REFERENCE . '_' . $cardSideCount, $cardSideBack);
-                $cardSideCount++;
-
-                $cardBlockBack = new CardBlock();
-                $cardBlockBack->setCardSide($cardSideBack);
-                $cardBlockBack->setContent($this->faker->sentence(10));
-
-                $this->addReference(self::CARD_BLOCK_REFERENCE . '_' . $cardBlockCount, $cardBlockBack);
-                $cardBlockCount++;
+                    $manager->persist($cardBlock);
+                    $this->addReference(self::CARD_BLOCK_REFERENCE . '_' . $cardBlockCount, $cardBlock);
+                    $cardBlockCount++;
+                }
 
                 $manager->persist($card);
-                $manager->persist($cardSideFront);
-                $manager->persist($cardBlockFront);
-                $manager->persist($cardSideBack);
-                $manager->persist($cardBlockBack);
-
                 $this->addReference(self::CARD_REFERENCE . '_' . $cardCount, $card);
                 $cardCount++;
             }
