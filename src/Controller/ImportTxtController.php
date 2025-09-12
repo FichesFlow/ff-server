@@ -17,8 +17,6 @@ class ImportTxtController extends AbstractController
     {
         $cards = [];
         $cardCount = 0;
-        $front = '';
-        $back = '';
         $file = $request->files->get('file');
         $pathName = $file->getPathname();
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
@@ -40,14 +38,11 @@ class ImportTxtController extends AbstractController
                         $cardCount++;
                         break;
                     case 'front:': // Front side
-                        $front = trim(substr($line, 7, strlen($line)));
+                        $front = trim(substr($line, 6, strlen($line)));
                         break;
                     case 'back:': // Back side
-                        $back = trim(substr($line, 6, strlen($line)));
-
+                        $back = trim(substr($line, 5, strlen($line)));
                         $cards[] = ['front' => $front, 'back' => $back];
-                        $front = '';
-                        $back = '';
                         break;
                     default: // Skip other lines
                 }
