@@ -152,12 +152,12 @@ class ImportController extends AbstractController
                     $back = '';
                 }
             }
-        }
 
-        fclose($file);
+            fclose($file);
 
-        if (!empty($front) && empty($back)) { // Missing back side for last card
-            return $this->json(['message' => 'Incomplete card: missing back side or separator'], 422);
+            if (!empty($front) && empty($back)) { // Missing back side for last card
+                return $this->json(['message' => 'Incomplete card: missing back side or separator'], 422);
+            }
         }
 
         if ($cardCount == 0) {
