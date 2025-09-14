@@ -17,7 +17,7 @@ class ImportController extends AbstractController
     public function importText(Request $request): JsonResponse
     {
         $cards = [];
-        $cardCount = 0;
+        $cardCount = 1;
         $file = $request->files->get('file');
         $pathName = $file->getPathname();
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
@@ -25,34 +25,68 @@ class ImportController extends AbstractController
         $fileSize = $file->getSize();
         finfo_close($finfo);
 
-        if ($fileType !== 'text/plain') {
+        if ($fileType != 'text/plain') {
             return $this->json(['message' => 'Invalid file type'], 422);
         } elseif ($fileSize > 1048576) {
             return $this->json(['message' => 'File size exceeds limit'], 413);
         }
 
         if ($file = fopen($pathName, "r")) {
+            $currentCard = ['front' => '', 'back' => ''];
+            $hasCardHeader = false;
+
             while(!feof($file)) {
                 $line = fgets($file);
-                $firstWord = strtok($line, " ");
 
-                switch ($firstWord) {
-                    case 'Carte': // New card
-                        $cardCount++;
-                        break;
-                    case 'front:': // Front side
-                        $front = trim(substr($line, 6, strlen($line)));
-                        break;
-                    case 'back:': // Back side
-                        $back = trim(substr($line, 5, strlen($line)));
-                        $cards[] = ['front' => $front, 'back' => $back];
-                        break;
-                    default: // Skip other lines
+                if (str_starts_with($line, 'Carte')) {
+                    if ($hasCardHeader) { // Either the front or back is missing
+                        if (empty($currentCard['front'])) {
+                            return $this->json(['message' => 'Missing front for Card '.$cardCount], 422);
+                        } elseif (empty($currentCard['back'])) {
+                            return $this->json(['message' => 'Missing back for Card '.$cardCount], 422);
+                        }
+                    }
+
+                    $hasCardHeader = true;
+                } elseif (str_starts_with($line, 'front:')) { // Front side
+                    if (!$hasCardHeader) {
+                        fclose($file);
+                        return $this->json(['message' => 'Missing header for Card '.$cardCount], 422);
+                    }
+
+                    $currentCard['front'] = trim(substr($line, 6));
+                } elseif (str_starts_with($line, 'back:')) { // Back side
+                    if (!$hasCardHeader) {
+                        fclose($file);
+                        return $this->json(['message' => 'Missing header for Card '.$cardCount], 422);
+                    }
+
+                    $currentCard['back'] = trim(substr($line, 5));
+
+                    if (empty($currentCard['front'])) {
+                        fclose($file);
+                        return $this->json(['message' => 'Missing front for Card '.$cardCount], 422);
+                    }
+
+                    $cards[] = $currentCard;
+                    $cardCount++;
+                    $currentCard = ['front' => '', 'back' => ''];
+                    $hasCardHeader = false;
                 }
             }
 
             fclose($file);
+
+            if ($hasCardHeader) { // Either the front or back for the last card is missing
+                if (empty($currentCard['front'])) {
+                    return $this->json(['message' => 'Missing front for Card '.$cardCount], 422);
+                } elseif (empty($currentCard['back'])) {
+                    return $this->json(['message' => 'Missing back for Card '.$cardCount], 422);
+                }
+            }
         }
+
+        $cardCount--;
 
         return $this->json([
             'cards' => $cards,
@@ -73,7 +107,7 @@ class ImportController extends AbstractController
         $fileSize = $file->getSize();
         finfo_close($finfo);
 
-        if ($fileType !== 'text/plain' && $fileType !== 'text/csv') {
+        if ($fileType != 'text/plain' && $fileType != 'text/csv') {
             return $this->json(['message' => 'Invalid file type'], 422);
         } elseif ($fileSize > 1048576) {
             return $this->json(['message' => 'File size exceeds limit'], 413);
@@ -93,6 +127,13 @@ class ImportController extends AbstractController
             $cardCount++;
             $front = trim($row['front']);
             $back = trim($row['back']);
+
+            if (empty($front)) {
+                return $this->json(['message' => 'Missing front for Card '.$cardCount], 422);
+            } elseif (empty($back)) {
+                return $this->json(['message' => 'Missing back for Card '.$cardCount], 422);
+            }
+
             $cards[] = ['front' => $front, 'back' => $back];
         }
 
@@ -115,7 +156,7 @@ class ImportController extends AbstractController
         $fileSize = $file->getSize();
         finfo_close($finfo);
 
-        if ($fileType !== 'text/plain' && $fileType !== 'text/markdown') {
+        if ($fileType != 'text/plain' && $fileType != 'text/markdown') {
             return $this->json(['message' => 'Invalid file type'], 422);
         } elseif ($fileSize > 1048576) {
             return $this->json(['message' => 'File size exceeds limit'], 413);
@@ -131,7 +172,7 @@ class ImportController extends AbstractController
                 if (str_starts_with($line, '## ')) { // New card
                     if (!empty($front) && empty($back)) { // Missing back side for previous card
                         fclose($file);
-                        return $this->json(['message' => 'Incomplete card: missing back side or separator'], 422);
+                        return $this->json(['message' => 'Card '.$cardCount.' incomplete: missing back side or separator'], 422);
                     }
 
                     $cardCount++;
@@ -141,10 +182,10 @@ class ImportController extends AbstractController
 
                     if (empty($front)) { // Missing front side for current card
                         fclose($file);
-                        return $this->json(['message' => 'Incomplete card: missing front side or header'], 422);
+                        return $this->json(['message' => 'Card '.$cardCount.' incomplete: missing front side or header'], 422);
                     } elseif (empty($back)) { // Missing back side for current card
                         fclose($file);
-                        return $this->json(['message' => 'Incomplete card: missing back side or separator'], 422);
+                        return $this->json(['message' => 'Card '.$cardCount.' incomplete: missing back side or separator'], 422);
                     }
 
                     $cards[] = ['front' => $front, 'back' => $back];
@@ -156,7 +197,7 @@ class ImportController extends AbstractController
             fclose($file);
 
             if (!empty($front) && empty($back)) { // Missing back side for last card
-                return $this->json(['message' => 'Incomplete card: missing back side or separator'], 422);
+                return $this->json(['message' => 'Card '.$cardCount.' incomplete: missing back side or separator'], 422);
             }
         }
 
