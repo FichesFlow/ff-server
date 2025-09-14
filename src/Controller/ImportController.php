@@ -25,8 +25,10 @@ class ImportController extends AbstractController
         $fileSize = $file->getSize();
         finfo_close($finfo);
 
-        if ($fileType !== 'text/plain' || $fileSize > 1048576) {
-            return $this->json(['message' => 'Invalid file type or size'], 422);
+        if ($fileType !== 'text/plain') {
+            return $this->json(['message' => 'Invalid file type'], 422);
+        } elseif ($fileSize > 1048576) {
+            return $this->json(['message' => 'File size exceeds limit'], 413);
         }
 
         if ($file = fopen($pathName, "r")) {
@@ -71,8 +73,10 @@ class ImportController extends AbstractController
         $fileSize = $file->getSize();
         finfo_close($finfo);
 
-        if (($fileType !== 'text/plain' && $fileType !== 'text/csv') || $fileSize > 1048576) {
-            return $this->json(['message' => 'Invalid file type or size'], 422);
+        if ($fileType !== 'text/plain' && $fileType !== 'text/csv') {
+            return $this->json(['message' => 'Invalid file type'], 422);
+        } elseif ($fileSize > 1048576) {
+            return $this->json(['message' => 'File size exceeds limit'], 413);
         }
 
         $csv = Reader::createFromPath($pathName, 'r');
@@ -90,6 +94,74 @@ class ImportController extends AbstractController
             $front = trim($row['front']);
             $back = trim($row['back']);
             $cards[] = ['front' => $front, 'back' => $back];
+        }
+
+        return $this->json([
+            'cards' => $cards,
+            'cardCount' => $cardCount
+        ]);
+    }
+
+    #[Route('api/import/md', name: 'api_import_md', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function importMd(Request $request): JsonResponse
+    {
+        $cards = [];
+        $cardCount = 0;
+        $file = $request->files->get('file');
+        $pathName = $file->getPathname();
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $fileType = finfo_file($finfo, $pathName);
+        $fileSize = $file->getSize();
+        finfo_close($finfo);
+
+        if ($fileType !== 'text/plain' && $fileType !== 'text/markdown') {
+            return $this->json(['message' => 'Invalid file type'], 422);
+        } elseif ($fileSize > 1048576) {
+            return $this->json(['message' => 'File size exceeds limit'], 413);
+        }
+
+        if ($file = fopen($pathName, "r")) {
+            $front = '';
+            $back = '';
+
+            while(!feof($file)) {
+                $line = trim(fgets($file));
+
+                if (str_starts_with($line, '## ')) { // New card
+                    if (!empty($front) && empty($back)) { // Missing back side for previous card
+                        fclose($file);
+                        return $this->json(['message' => 'Incomplete card: missing back side or separator'], 422);
+                    }
+
+                    $cardCount++;
+                    $front = trim(fgets($file));
+                } elseif ($line == '---') { // Separator
+                    $back = trim(fgets($file));
+
+                    if (empty($front)) { // Missing front side for current card
+                        fclose($file);
+                        return $this->json(['message' => 'Incomplete card: missing front side or header'], 422);
+                    } elseif (empty($back)) { // Missing back side for current card
+                        fclose($file);
+                        return $this->json(['message' => 'Incomplete card: missing back side or separator'], 422);
+                    }
+
+                    $cards[] = ['front' => $front, 'back' => $back];
+                    $front = '';
+                    $back = '';
+                }
+            }
+
+            fclose($file);
+
+            if (!empty($front) && empty($back)) { // Missing back side for last card
+                return $this->json(['message' => 'Incomplete card: missing back side or separator'], 422);
+            }
+        }
+
+        if ($cardCount == 0) {
+            return $this->json(['message' => 'No cards found'], 422);
         }
 
         return $this->json([
