@@ -169,4 +169,49 @@ class ImportController extends AbstractController
             'cardCount' => $cardCount
         ]);
     }
+
+    #[Route('api/import/json', name: 'api_import_json', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function importJson(Request $request): JsonResponse
+    {
+        $cardCount = 0;
+        $file = $request->files->get('file');
+        $pathName = $file->getPathname();
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $fileType = finfo_file($finfo, $pathName);
+        $fileSize = $file->getSize();
+        finfo_close($finfo);
+
+        if ($fileType != 'text/plain' && $fileType != 'application/json' && $fileType != 'text/json') {
+            return $this->json(['message' => 'Invalid file type'], 422);
+        } elseif ($fileSize > 1048576) {
+            return $this->json(['message' => 'File size exceeds limit'], 413);
+        }
+
+        $jsonContent = file_get_contents($pathName);
+        $data = json_decode($jsonContent);
+
+        if (json_last_error() != JSON_ERROR_NONE) {
+            return $this->json(['message' => 'Invalid JSON format'], 422);
+        } elseif (gettype($data) != 'array') {
+            return $this->json(['message' => 'Invalid JSON structure'], 422);
+        }
+
+        foreach ($data as $item) {
+            $cardCount++;
+
+            if (gettype($item) != 'object') {
+                return $this->json(['message' => 'Invalid structure for Card '.$cardCount], 422);
+            } elseif (!property_exists($item, 'front')) {
+                return $this->json(['message' => 'Missing front for Card '.$cardCount], 422);
+            } elseif (!property_exists($item, 'back')) {
+                return $this->json(['message' => 'Missing back for Card '.$cardCount], 422);
+            }
+        }
+
+        return $this->json([
+            'cards' => $data,
+            'cardCount' => count($data)
+        ]);
+    }
 }
