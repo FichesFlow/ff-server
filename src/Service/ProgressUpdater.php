@@ -11,8 +11,6 @@ use DateTimeInterface;
 
 readonly class ProgressUpdater
 {
-    private const array LADDER = [1, 3, 7, 15, 30]; // days
-
     public function __construct(
         private ReviewProgressRepository $repository
     )
@@ -31,34 +29,45 @@ readonly class ProgressUpdater
                 ->setCard($card)
                 ->setEasiness(2.5)
                 ->setIntervalDays(1)
+                ->setRepetitions(0)
                 ->setDueAt((clone $when)->modify('+1 day'))
                 ->setTotalReviews(0);
             $isNew = true;
         }
 
-        // Determine current position in the ladder
-        $current = $progress->getIntervalDays();
-        $idx = $this->indexInLadder($current);
+        // Get current values
+        $n = $progress->getRepetitions();
+        $ef = $progress->getEasiness();
+        $interval = $progress->getIntervalDays();
 
-        // Apply rule based on score
-        if ($score === 0) {
-            // Reset to beginning
-            $idx = 0;
-            $progress->setEasiness(max(1.3, $progress->getEasiness() - 0.2));
-        } else {
-            // Advance one step
-            $idx = min($idx + 1, count(self::LADDER) - 1);
-            if ($score === 5) {
-                $progress->setEasiness(min(2.5, $progress->getEasiness() + 0.1));
+        // Apply SM-2 algorithm
+        if ($score >= 3) { // Correct response
+            if ($n == 0) {
+                $interval = 1;
+            } elseif ($n == 1) {
+                $interval = 6;
+            } else {
+                $interval = round($interval * $ef);
             }
-            // Score 3 keeps easiness unchanged (neutral progress)
+            $n++; // Increment repetition number
+        } else { // Incorrect response
+            $n = 0;
+            $interval = 1;
         }
 
-        $interval = self::LADDER[$idx];
+        // Update easiness factor
+        $ef = $ef + (0.1 - (5 - $score) * (0.08 + (5 - $score) * 0.02));
+        if ($ef < 1.3) {
+            $ef = 1.3;
+        }
+
+        // Calculate due date
         $dueAt = (clone $when)->modify("+{$interval} days");
 
         // Update all fields
         $progress
+            ->setRepetitions($n)
+            ->setEasiness($ef)
             ->setIntervalDays($interval)
             ->setDueAt($dueAt)
             ->setLastReviewAt(
@@ -75,12 +84,6 @@ readonly class ProgressUpdater
         }
 
         return $progress;
-    }
-
-    private function indexInLadder(int $days): int
-    {
-        $idx = array_search($days, self::LADDER, true);
-        return $idx === false ? 0 : $idx;
     }
 
     public function isNewProgress(User $user, Card $card): bool

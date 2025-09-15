@@ -52,7 +52,12 @@ class ReviewSessionController extends AbstractController
 
         // Validate request
         $constraints = new Assert\Collection([
-            'deck' => [new Assert\NotBlank(), new Assert\Uuid()],
+            'deck' => [
+                new Assert\Optional([
+                    new Assert\NotBlank(),
+                    new Assert\Uuid()
+                ])
+            ],
             'mode' => [new Assert\NotBlank(), new Assert\Choice(choices: ['flashcard', 'qcm'])],
             'cards' => [
                 new Assert\Optional([
@@ -82,21 +87,39 @@ class ReviewSessionController extends AbstractController
             throw new BadRequestHttpException((string)$violations);
         }
 
-        if (!$deck = $deckRepository->find($data['deck'])) {
-            throw $this->createNotFoundException('Deck not found');
+        // Check if deck is provided
+        $deck = null;
+        if (!empty($data['deck'])) {
+            if (!$deck = $deckRepository->find($data['deck'])) {
+                throw $this->createNotFoundException('Deck not found');
+            }
         }
 
         if (!empty($data['cards'])) {
             // Manual mode: use provided cards
             $origin = ReviewSessionOrigin::MANUAL;
-            $cards = $cardRepository->findBy([
-                'id' => $data['cards'],
-                'deck' => $deck
-            ]);
 
-            // Check if all requested cards were found
-            if (count($cards) !== count($data['cards'])) {
-                throw new BadRequestHttpException('Some requested cards were not found or do not belong to the specified deck');
+            if ($deck) {
+                // Deck-specific manual mode
+                $cards = $cardRepository->findBy([
+                    'id' => $data['cards'],
+                    'deck' => $deck
+                ]);
+
+                // Check if all requested cards were found
+                if (count($cards) !== count($data['cards'])) {
+                    throw new BadRequestHttpException('Some requested cards were not found or do not belong to the specified deck');
+                }
+            } else {
+                // Cross-deck manual mode
+                $cards = $cardRepository->findBy([
+                    'id' => $data['cards']
+                ]);
+
+                // Check if all requested cards were found
+                if (count($cards) !== count($data['cards'])) {
+                    throw new BadRequestHttpException('Some requested cards were not found');
+                }
             }
         } else {
             // Queue mode: auto-select cards
@@ -105,29 +128,40 @@ class ReviewSessionController extends AbstractController
             $newCount = $data['newCount'] ?? 0;
             $now = new DateTime();
 
-            // If newCount is specified, get that many never-seen cards first
-            $neverSeenCards = [];
-            if ($newCount > 0) {
-                $neverSeenCards = $cardRepository->findNeverSeenCardsInDeck($user, $deck, $newCount, []);
-            }
+            if ($deck) {
+                // Deck-specific queue mode (existing logic)
+                // If newCount is specified, get that many never-seen cards first
+                $neverSeenCards = [];
+                if ($newCount > 0) {
+                    $neverSeenCards = $cardRepository->findNeverSeenCardsInDeck($user, $deck, $newCount, []);
+                }
 
-            // Get due cards (up to dueLimit), excluding the new cards already selected
-            $excludeIds = array_map(fn($card) => $card->getId(), $neverSeenCards);
-            $dueProgressRecords = $reviewProgressRepository->findDueForUserInDeck($user, $deck, $now, $dueLimit, $excludeIds);
-            $dueCards = array_map(fn($progress) => $progress->getCard(), $dueProgressRecords);
+                // Get due cards (up to dueLimit), excluding the new cards already selected
+                $excludeIds = array_map(fn($card) => $card->getId(), $neverSeenCards);
+                $dueProgressRecords = $reviewProgressRepository->findDueForUserInDeck($user, $deck, $now, $dueLimit, $excludeIds);
+                $dueCards = array_map(fn($progress) => $progress->getCard(), $dueProgressRecords);
 
-            // New cards first, then due cards
-            $cards = array_merge($neverSeenCards, $dueCards);
+                // New cards first, then due cards
+                $cards = array_merge($neverSeenCards, $dueCards);
 
-            if (empty($cards)) {
-                return $this->json(['message' => 'No cards available for review in this deck'], Response::HTTP_OK);
+                if (empty($cards)) {
+                    return $this->json(['message' => 'No cards available for review in this deck'], Response::HTTP_OK);
+                }
+            } else {
+                // Cross-deck queue mode: only due cards (newCount ignored)
+                $dueProgressRecords = $reviewProgressRepository->findDueForUser($user, $now);
+                $cards = array_map(fn($progress) => $progress->getCard(), $dueProgressRecords);
+
+                if (empty($cards)) {
+                    return $this->json(['message' => 'No due cards available for review'], Response::HTTP_OK);
+                }
             }
         }
 
         // Create a review session
         $reviewSession = new ReviewSession();
         $reviewSession->setReviewer($user);
-        $reviewSession->setDeck($deck);
+        $reviewSession->setDeck($deck); // This can be null for cross-deck sessions
         $reviewSession->setMode(ReviewMode::from($data['mode']));
         $reviewSession->setOrigin($origin);
 
