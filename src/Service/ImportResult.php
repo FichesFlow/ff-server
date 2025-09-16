@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Dto\CardDto;
 
 final class ImportResult {
+    
     /**
     * @param CardDto[] $cards
     */

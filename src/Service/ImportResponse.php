@@ -5,9 +5,11 @@ namespace App\Service;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Post;
 use App\Controller\ImportCsvController;
+use App\Controller\ImportDocxController;
 use App\Controller\ImportJsonController;
 use App\Controller\ImportMarkdownController;
 use App\Controller\ImportTxtController;
+use App\Controller\ImportXlsxController;
 use App\Dto\CardDto;
 use Symfony\Component\Serializer\Annotation\Groups;
 
@@ -40,6 +42,20 @@ use Symfony\Component\Serializer\Annotation\Groups;
             inputFormats: ['multipart' => ['multipart/form-data']],
             output: ImportResponse::class,
             name: 'import_json'
+        ),
+        new Post(
+            uriTemplate: '/import/docx',
+            controller: ImportDocxController::class,
+            inputFormats: ['multipart' => ['multipart/form-data']],
+            output: ImportResponse::class,
+            name: 'import_docx'
+        ),
+        new Post(
+            uriTemplate: '/import/xlsx',
+            controller: ImportXlsxController::class,
+            inputFormats: ['multipart' => ['multipart/form-data']],
+            output: ImportResponse::class,
+            name: 'import_xlsx'
         )
     ],
     normalizationContext: ['groups' => ['import:read']]
