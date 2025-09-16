@@ -17,6 +17,7 @@
         "doctrine/orm": "^3.5",
         "gedmo/doctrine-extensions": "^3.20",
         "gesdinet/jwt-refresh-token-bundle": "^1.5",
+        "laminas/laminas-escaper": "^2.17",
         "league/commonmark": "*",
         "league/csv": "^9.25",
         "lexik/jwt-authentication-bundle": "^3.1.1",
