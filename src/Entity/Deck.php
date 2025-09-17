@@ -141,6 +141,9 @@ class Deck
     #[ORM\OneToMany(targetEntity: ReviewSession::class, mappedBy: 'deck')]
     private Collection $reviewSessions;
 
+    #[Groups(['deck:read', 'deck:list'])]
+    private ?string $firstCardFront = null;
+
     public function __construct()
     {
         $this->tags = new ArrayCollection();
@@ -429,6 +432,18 @@ class Deck
                 $reviewSession->setDeck(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getFirstCardFront(): ?string
+    {
+        return $this->firstCardFront;
+    }
+
+    public function setFirstCardFront(?string $firstCardFront): static
+    {
+        $this->firstCardFront = $firstCardFront;
 
         return $this;
     }
