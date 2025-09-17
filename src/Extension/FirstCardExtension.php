@@ -60,7 +60,6 @@ final class FirstCardExtension implements QueryCollectionExtensionInterface, Que
         array                       $context = []
     ): void
     {
-        $this->addFirstCardData($queryBuilder, $queryNameGenerator, $resourceClass);
     }
 
     public function getResult(QueryBuilder $queryBuilder, ?string $resourceClass = null, ?Operation $operation = null, array $context = []): iterable
