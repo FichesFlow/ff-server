@@ -16,7 +16,7 @@ class ImportTxtController extends AbstractController
         private TxtImportService $txtImportService
     ) {}
 
-    #[Route('api/import/text', name: 'api_import_text', methods: ['POST'])]
+    #[Route('api/import/txt', name: 'api_import_txt', methods: ['POST'])]
     #[IsGranted('ROLE_USER')]
     public function importText(Request $request): JsonResponse
     {
@@ -38,7 +38,7 @@ class ImportTxtController extends AbstractController
         if ($importResult->hasError()) {
             return $this->json(['message' => $importResult->errorMessage], 422);
         }
-        
+
         $importResponse = new ImportResponse($importResult->cards);
         return $this->json($importResponse);
     }
