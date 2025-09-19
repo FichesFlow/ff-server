@@ -75,4 +75,30 @@ class RateDeckController extends AbstractController
                 return $this->json(['error' => 'Method not allowed'], 405);
         }
     }
+
+    #[Route('/api/decks/{id}/rate', name: 'api_get_user_deck_rating', methods: ['GET'])]
+    #[IsGranted('ROLE_USER')]
+    public function getUserRating(
+        string                 $id,
+        EntityManagerInterface $entityManager
+    ): JsonResponse
+    {
+        $deck = $entityManager->getRepository(Deck::class)->find($id);
+
+        if (!$deck) {
+            return $this->json(['error' => 'Deck not found'], 404);
+        }
+
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $deckRating = $entityManager->getRepository(DeckRating::class)
+            ->findOneBy(['deck' => $deck, 'rater' => $user]);
+
+        if (!$deckRating) {
+            return $this->json(['rating' => null], 200);
+        }
+
+        return $this->json(['rating' => $deckRating->getRating()], 200);
+    }
 }
