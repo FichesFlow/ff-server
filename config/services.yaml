@@ -20,3 +20,7 @@ services:
     # please note that last definitions always *replace* previous ones
     App\Extension\FirstCardExtension:
         tags: [ 'api_platform.doctrine.orm.query_extension.collection' ]
+
+    App\EventListener\JWTCreatedListener:
+        tags:
+            - { name: kernel.event_listener, event: lexik_jwt_authentication.on_jwt_created, method: onJWTCreated }
