@@ -58,7 +58,7 @@ class ReviewSessionController extends AbstractController
                     new Assert\Uuid()
                 ])
             ],
-            'mode' => [new Assert\NotBlank(), new Assert\Choice(choices: ['flashcard', 'qcm'])],
+            'mode' => [new Assert\NotBlank(), new Assert\Choice(choices: ['flashcard', 'qcm', 'dictaphone'])],
             'cards' => [
                 new Assert\Optional([
                     new Assert\Type('array'),
