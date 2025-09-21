@@ -8,6 +8,7 @@ use App\Controller\ImportCsvController;
 use App\Controller\ImportDocxController;
 use App\Controller\ImportJsonController;
 use App\Controller\ImportMarkdownController;
+use App\Controller\ImportPdfController;
 use App\Controller\ImportTxtController;
 use App\Controller\ImportXlsxController;
 use App\Dto\CardDto;
@@ -56,6 +57,13 @@ use Symfony\Component\Serializer\Annotation\Groups;
             inputFormats: ['multipart' => ['multipart/form-data']],
             output: ImportResponse::class,
             name: 'import_xlsx'
+        ),
+        new Post(
+            uriTemplate: '/import/pdf',
+            controller: ImportPdfController::class,
+            inputFormats: ['multipart' => ['multipart/form-data']],
+            output: ImportResponse::class,
+            name: 'import_pdf'
         )
     ],
     normalizationContext: ['groups' => ['import:read']]
