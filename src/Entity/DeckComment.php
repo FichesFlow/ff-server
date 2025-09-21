@@ -8,6 +8,7 @@ use App\Entity\Traits\UuidTrait;
 use App\Repository\DeckCommentRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: DeckCommentRepository::class)]
 #[ApiResource]
@@ -21,9 +22,11 @@ class DeckComment
     private ?Deck $deck = null;
 
     #[ORM\ManyToOne(inversedBy: 'deckComments')]
+    #[Groups(['comment:read'])]
     private ?User $commenter = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Groups(['comment:read'])]
     private ?string $body = null;
 
     public function getDeck(): ?Deck

@@ -7,16 +7,18 @@ use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 trait DateAtTrait
 {
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE)]
     #[Gedmo\Timestampable(on: 'create')]
+    #[Groups(['comment:read'])]
     private ?DateTimeImmutable $created_at = null;
 
     #[ORM\Column(type: Types::DATETIMETZ_MUTABLE)]
     #[Gedmo\Timestampable(on: 'update')]
-    #[Groups(['deck:list'])]
+    #[Groups(['deck:list', 'comment:read'])]
     private ?DateTime $updated_at = null;
 
     public function __construct()

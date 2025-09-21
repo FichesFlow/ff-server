@@ -62,11 +62,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
     #[ORM\Column(length: 50)]
-    #[Groups(['user:read'])]
+    #[Groups(['user:read', 'comment:read'])]
     private ?string $username = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['user:read'])]
+    #[Groups(['user:read', 'comment:read'])]
     private ?string $avatar_url = null;
 
     /**
