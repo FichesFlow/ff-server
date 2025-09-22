@@ -16,22 +16,18 @@ final class HomeDeckFeedController extends AbstractController
     #[Cache(public: true, maxage: 60)]
     public function __invoke(Request $request, DeckRepository $deckRepository): JsonResponse
     {
-        $payload = $request->getPayload();
-        $size = $payload->get('size', 12);
+        $size = (int) $request->query->get('size', 12);
+        $top = (int) $request->query->get('top', 6);
 
         if ($size < 1 || $size > 24) {
             return $this->json(['message' => 'Size must be between 1 and 24'], 422);
-        }
-
-        $top = $payload->get('top', 6);
-
-        if ($top < 0 || $top > $size) {
+        } elseif ($top < 0 || $top > $size) {
             return $this->json(['message' => 'Top must be between 0 and '.$size], 422);
         }
 
-        $best = $deckRepository->findTopRated($top);
+        $best = $deckRepository->findTopRated($top); // Find most rated decks
         $ids = array_column($best, 'id');
-        $random = $deckRepository->findRandomPublicPublished($size - count($best), $ids);
+        $random = $deckRepository->findRandomPublicPublished($size - count($best), $ids); // Find random decks
 
         $mix = array_merge($best, $random);
         shuffle($mix);
