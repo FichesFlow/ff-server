@@ -31,7 +31,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ApiFilter(MineDecksFilter::class, properties: ['mine'])]
 #[ApiResource(
     operations: [
-        new Get(normalizationContext: ['groups' => ['deck:read', 'deck:item', 'deck:list', 'uuid']]),
+        new Get(normalizationContext: ['groups' => ['deck:read', 'deck:item', 'deck:list', 'uuid', 'home:list']]),
         new Get(
             uriTemplate: '/decks/{id}/stats',
             controller: DeckStatsController::class,
@@ -67,7 +67,7 @@ class Deck
     private ?User $owner = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['deck:read', 'deck:item', 'deck:list', 'queue:item', 'deck:update'])]
+    #[Groups(['deck:read', 'deck:item', 'deck:list', 'queue:item', 'deck:update', 'home:list'])]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
@@ -75,7 +75,7 @@ class Deck
     private ?string $description = null;
 
     #[ORM\Column(nullable: true, enumType: CountryCodeAlpha2::class)]
-    #[Groups(['deck:read', 'deck:item', 'deck:update'])]
+    #[Groups(['deck:read', 'deck:item', 'deck:update', 'home:list'])]
     private ?CountryCodeAlpha2 $language = null;
 
     #[ORM\Column(enumType: DeckVisibility::class)]
@@ -84,7 +84,7 @@ class Deck
     private ?DeckVisibility $visibility = DeckVisibility::UNLISTED;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 3, scale: 2)]
-    #[Groups(['deck:read', 'deck:item'])]
+    #[Groups(['deck:read', 'deck:item', 'home:list'])]
     private float $rating_avg = 0.00;
 
     #[ORM\Column]
@@ -92,7 +92,7 @@ class Deck
     private int $rating_count = 0;
 
     #[ORM\Column]
-    #[Groups(['deck:read', 'deck:item', 'deck:list', 'queue:item'])]
+    #[Groups(['deck:read', 'deck:item', 'deck:list', 'queue:item', 'home:list'])]
     private int $card_count = 0;
 
     #[ORM\Column(enumType: DeckStatus::class)]

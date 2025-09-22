@@ -4,6 +4,8 @@ namespace App\Repository;
 
 use App\Entity\Deck;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\ORM\Query\Parameter;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -14,6 +16,48 @@ class DeckRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Deck::class);
+    }
+
+    public function findTopRated(int $limit): array
+    {
+        return $this->createQueryBuilder('d')
+            ->where('d.visibility = :pub')
+            ->andWhere('d.status = :publi')
+            ->andWhere('d.rating_count >= 5')
+            ->setParameters(new ArrayCollection([
+                new Parameter('pub', 'public'), 
+                new Parameter('publi', 'published')
+            ]))
+            ->orderBy('d.rating_avg', 'DESC')
+            ->addOrderBy('d.rating_count', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
+    public function findRandomPublicPublished(int $limit, array $excludeIds = []): array
+    {
+        $queryBuilder = $this->createQueryBuilder('d')
+            ->where('d.visibility = :pub')
+            ->andWhere('d.status = :publi')
+            ->setParameters(new ArrayCollection([
+                new Parameter('pub', 'public'), 
+                new Parameter('publi', 'published')
+            ]))
+        ;
+
+        if ($excludeIds) {
+            $queryBuilder->andWhere($queryBuilder->expr()->notIn('d.id', ':excl'))
+                ->setParameter('excl', $excludeIds)
+            ;
+        }
+
+        return $queryBuilder->orderBy('RANDOM()')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult()
+        ;
     }
 
     //    /**
