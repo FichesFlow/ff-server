@@ -138,6 +138,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: ReviewProgress::class, mappedBy: 'reviewer', orphanRemoval: true)]
     private Collection $reviewProgress;
 
+    #[ORM\OneToOne(mappedBy: 'owner', cascade: ['persist', 'remove'])]
+    private ?UserPreference $userPreference = null;
+
     public function __construct()
     {
         $this->userBadges = new ArrayCollection();
@@ -668,6 +671,23 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
                 $reviewProgress->setReviewer(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getUserPreference(): ?UserPreference
+    {
+        return $this->userPreference;
+    }
+
+    public function setUserPreference(UserPreference $userPreference): static
+    {
+        // set the owning side of the relation if necessary
+        if ($userPreference->getOwner() !== $this) {
+            $userPreference->setOwner($this);
+        }
+
+        $this->userPreference = $userPreference;
 
         return $this;
     }
