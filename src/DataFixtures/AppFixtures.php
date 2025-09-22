@@ -3,6 +3,7 @@
 namespace App\DataFixtures;
 
 use App\DataFixtures\CardFixtures;
+use App\DataFixtures\DeckCommentFixtures;
 use App\DataFixtures\DeckFixtures;
 use App\DataFixtures\RatingFixtures;
 use App\DataFixtures\TagFixtures;
@@ -30,6 +31,7 @@ class AppFixtures extends Fixture implements DependentFixtureInterface
             DeckFixtures::class,
             CardFixtures::class,
             RatingFixtures::class,
+            DeckCommentFixtures::class,
         ];
     }
 }

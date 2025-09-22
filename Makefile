@@ -61,8 +61,9 @@ cc: c=c:c ## Clear the cache
 cc: sf
 
 ## —— Database reset and data seeding 🐘 ———————————————————————————————————————————
-seed:
-	php bin/console doctrine:database:drop --force --if-exists
-	php bin/console doctrine:database:create
-	php bin/console doctrine:migrations:migrate --no-interaction
-	php bin/console doctrine:fixtures:load --no-interaction
+seed: ## Reset database and load fixtures
+	$(PHP) bin/console doctrine:database:drop --force --if-exists
+	$(PHP) bin/console doctrine:database:create
+	$(PHP) bin/console doctrine:migrations:migrate --no-interaction
+	$(PHP) bin/console doctrine:fixtures:load --no-interaction
+	$(PHP) bin/console app:recalculate-deck-card-counts

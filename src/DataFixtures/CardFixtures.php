@@ -33,7 +33,7 @@ class CardFixtures extends Fixture
         $sides = [CardSides::FRONT, CardSides::BACK];
 
         foreach ($decks as $deck) {
-            for ($i = 0; $i < 20; $i++) {
+            for ($i = 0; $i < $this->faker->numberBetween(5, 20); $i++) {
                 $card = new Card();
                 $card->setDeck($deck);
                 $deck->setCardCount($deck->getCardCount() + 1);
