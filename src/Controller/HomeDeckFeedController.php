@@ -36,6 +36,6 @@ final class HomeDeckFeedController extends AbstractController
         $mix = array_merge($best, $random);
         shuffle($mix);
 
-        return $this->json(['decks' => $mix], 200, []);
+        return $this->json(['decks' => $mix], 200, [], ['groups' => ['home:list']]);
     }
 }

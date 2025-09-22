@@ -32,7 +32,7 @@ class DeckRepository extends ServiceEntityRepository
             ->addOrderBy('d.rating_count', 'DESC')
             ->setMaxResults($limit)
             ->getQuery()
-            ->getArrayResult()
+            ->getResult()
         ;
     }
 
@@ -56,7 +56,7 @@ class DeckRepository extends ServiceEntityRepository
         return $queryBuilder->orderBy('RANDOM()')
             ->setMaxResults($limit)
             ->getQuery()
-            ->getArrayResult()
+            ->getResult()
         ;
     }
 
