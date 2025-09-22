@@ -3,14 +3,30 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Put;
 use App\Enum\CountryCodeAlpha2;
 use App\Enum\Theme;
 use App\Repository\UserPreferenceRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: UserPreferenceRepository::class)]
-#[ApiResource]
+#[ApiResource(
+    operations: [
+      new Get(
+        uriTemplate: 'api/me/preferences',
+        security: "is_granted('ROLE_USER') && object.getUser() == user",
+        normalizationContext: ['groups' => ['pref:read']]
+      ),
+      new Put(
+        uriTemplate: 'api/me/preferences',
+        security: "is_granted('ROLE_USER') && object.getUser() == user",
+        denormalizationContext: ['groups' => ['pref:write']]
+      ),
+    ]
+)]
 class UserPreference
 {
     #[ORM\Id]
@@ -23,18 +39,23 @@ class UserPreference
     private ?User $owner = null;
 
     #[ORM\Column(nullable:true, enumType: Theme::class)]
+    #[Groups(['pref:read', 'pref:write'])]
     private ?Theme $theme = Theme::AUTO;
 
     #[ORM\Column(nullable: true, enumType: CountryCodeAlpha2::class)]
+    #[Groups(['pref:read', 'pref:write'])]
     private ?CountryCodeAlpha2 $language = CountryCodeAlpha2::France;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['pref:read', 'pref:write'])]
     private ?\DateTimeImmutable $dailyReminder = null;
 
     #[ORM\Column(type: Types::SMALLINT)]
+    #[Groups(['pref:read', 'pref:write'])]
     private ?int $cardsPerSession = 20;
 
     #[ORM\Column]
+    #[Groups(['pref:read', 'pref:write'])]
     private ?bool $notifOnLevelUp = true;
 
     public function getId(): ?int
@@ -78,12 +99,12 @@ class UserPreference
         return $this;
     }
 
-    public function getDailyReminder(): ?\DateTime
+    public function getDailyReminder(): ?\DateTimeImmutable
     {
         return $this->dailyReminder;
     }
 
-    public function setDailyReminder(?\DateTime $dailyReminder): static
+    public function setDailyReminder(?\DateTimeImmutable $dailyReminder): static
     {
         $this->dailyReminder = $dailyReminder;
 
