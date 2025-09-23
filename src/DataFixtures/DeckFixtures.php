@@ -27,8 +27,14 @@ class DeckFixtures extends Fixture
     {
         $users = $this->userRepository->findAll();
         $deckCount = 0;
-       
+
         foreach ($users as $user) {
+
+            // Skip deck creation for admin user
+            if ($user->getUsername() === 'admin') {
+                continue;
+            }
+
             for ($i = 0; $i < 3; $i++) {
                 $deck = new Deck();
                 $deck->setOwner($user);
