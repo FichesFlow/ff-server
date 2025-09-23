@@ -118,7 +118,7 @@ class Deck
     /**
      * @var Collection<int, DeckRating>
      */
-    #[ORM\OneToMany(targetEntity: DeckRating::class, mappedBy: 'deck', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: DeckRating::class, mappedBy: 'deck', cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[Groups(['deck:read', 'deck:item'])]
     private Collection $deckRatings;
 
